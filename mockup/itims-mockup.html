@@ -1,0 +1,1053 @@
+<title>iTIMS</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: centered 1040px column of white cards on a pale lilac-grey ground, matching Rich's Bill Pay Canvas */
+:root{
+  --bg:#f7f7fb; --card:#ffffff; --line:#e6e6ef; --soft:#f1f0fb;
+  --fg:#16161d; --muted:#6b6b7b; --faint:#9a9aab;
+  --accent:#5b4be6; --accent-fg:#ffffff; --accent-soft:#ecebfd;
+  --ok:#14915a; --ok-soft:#e3f5ec; --warn:#b26a00; --warn-soft:#fdf1dc;
+  --bad:#d23b3b; --bad-soft:#fde7e7; --info:#2f6fdb; --info-soft:#e4eeff;
+  --off:#7b7b8a; --off-soft:#efeff3;
+  --plan-wall:#3b3b4a; --plan-room:#fbfbfe; --plan-label:#8a8a9c;
+  --shadow:0 1px 2px rgba(20,20,40,.04),0 4px 16px rgba(20,20,40,.05);
+  --font:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111117; --card:#1a1a22; --line:#2c2c38; --soft:#22212e;
+  --fg:#ececf3; --muted:#a3a3b5; --faint:#77778a;
+  --accent:#8b7ff5; --accent-fg:#14121f; --accent-soft:#2a2650;
+  --ok:#4fcf8f; --ok-soft:#163326; --warn:#f0b14a; --warn-soft:#3a2c12; --bad:#ff6b6b; --bad-soft:#3d1a1d;
+  --info:#7aa7ff; --info-soft:#1b2947; --off:#9b9bab; --off-soft:#26262f;
+  --plan-wall:#a9a9bd; --plan-room:#1f1f28; --plan-label:#8a8aa0;
+  --shadow:0 1px 2px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111117; --card:#1a1a22; --line:#2c2c38; --soft:#22212e;
+  --fg:#ececf3; --muted:#a3a3b5; --faint:#77778a;
+  --accent:#8b7ff5; --accent-fg:#14121f; --accent-soft:#2a2650;
+  --ok:#4fcf8f; --ok-soft:#163326; --warn:#f0b14a; --warn-soft:#3a2c12; --bad:#ff6b6b; --bad-soft:#3d1a1d;
+  --info:#7aa7ff; --info-soft:#1b2947; --off:#9b9bab; --off-soft:#26262f;
+  --plan-wall:#a9a9bd; --plan-room:#1f1f28; --plan-label:#8a8aa0;
+  --shadow:0 1px 2px rgba(0,0,0,.3); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:14px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 48px}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,.pin:focus-visible,th button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--mono);font-size:.92em}
+.num{font-variant-numeric:tabular-nums}
+
+/* header */
+.head{display:flex;flex-direction:column;gap:6px}
+.title-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.logo{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;color:var(--accent)}
+h1{font-size:22px;font-weight:700;margin:0;letter-spacing:-.01em}
+.summary{color:var(--muted);font-size:13.5px;display:flex;flex-wrap:wrap;gap:4px 10px}
+.summary b{color:var(--accent);font-weight:600}
+.summary .sep{color:var(--faint)}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--card);padding:8px 13px;border-radius:8px;font-weight:600;font-size:13px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn:hover{filter:brightness(.97)}
+.sample{margin-left:auto;font-size:12px;color:var(--faint)}
+
+/* pills */
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.nodot::before{display:none}
+.c-ok{color:var(--ok);background:var(--ok-soft)} .c-warn{color:var(--warn);background:var(--warn-soft)}
+.c-bad{color:var(--bad);background:var(--bad-soft)} .c-info{color:var(--info);background:var(--info-soft)}
+.c-off{color:var(--off);background:var(--off-soft)} .c-acc{color:var(--accent);background:var(--accent-soft)}
+
+/* tabs */
+.tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:0}
+.tab{border:0;background:none;padding:9px 11px 10px;font-weight:600;font-size:13.5px;color:var(--muted);display:flex;gap:7px;align-items:center;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab .count{font-size:11.5px;background:var(--off-soft);color:var(--muted);border-radius:999px;padding:1px 7px}
+.tab[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+.tab[aria-selected="true"] .count{background:var(--accent-soft);color:var(--accent)}
+
+/* tiles */
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:4px;box-shadow:var(--shadow)}
+.tile .lbl{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+.tile .ico{width:24px;height:24px;border-radius:6px;display:grid;place-items:center}
+.tile .big{font-size:28px;font-weight:700;letter-spacing:-.02em}
+.tile .sub{color:var(--muted);font-size:12.5px}
+.tile .foot{border-top:1px solid var(--line);margin-top:8px;padding-top:8px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+
+/* cards */
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+.card-h{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.card-h .hi{width:30px;height:30px;border-radius:8px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;flex:none}
+.card-h h2{font-size:15px;margin:0;font-weight:700}
+.card-h p{margin:0;color:var(--muted);font-size:12.5px}
+.card-h .right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* attention */
+.attn{background:linear-gradient(180deg,var(--soft),var(--card));padding:18px 20px;display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center}
+.attn .thumb{width:84px;height:84px;border-radius:12px}
+.attn h3{margin:6px 0 4px;font-size:19px}
+.attn p{margin:0;color:var(--muted);font-size:13px;max-width:60ch}
+.attn .meta{margin-top:8px;font-size:12px;color:var(--faint);display:flex;gap:14px;flex-wrap:wrap}
+
+/* photo placeholder */
+.photo{background:var(--soft);border:1px solid var(--line);color:var(--accent);display:grid;place-items:center;position:relative;overflow:hidden}
+.photo svg{width:58%;height:58%}
+.photo .tag{position:absolute;bottom:6px;left:0;right:0;text-align:center;font-size:10px;color:var(--faint);letter-spacing:.04em}
+
+/* floorplan */
+.plan-wrap{padding:14px 16px 16px}
+.plan{position:relative;width:100%;aspect-ratio:1000/600;max-width:100%;border-radius:10px;overflow:visible}
+.plan svg.fp{position:absolute;inset:0;width:100%;height:100%}
+.pin{position:absolute;transform:translate(-50%,-50%);width:28px;height:28px;border-radius:50%;border:2px solid var(--card);display:grid;place-items:center;color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);padding:0}
+.pin svg{width:15px;height:15px}
+.pin.ok{background:var(--ok)} .pin.warn{background:var(--warn)} .pin.bad{background:var(--bad)} .pin.info{background:var(--info)} .pin.off{background:var(--off)}
+.pin.bad::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid var(--bad);opacity:.5;animation:pulse 1.8s ease-out infinite}
+@keyframes pulse{from{transform:scale(.8);opacity:.6}to{transform:scale(1.4);opacity:0}}
+@media (prefers-reduced-motion:reduce){.pin.bad::after{animation:none}}
+.pin.dim{opacity:.18;pointer-events:none}
+.pop{position:absolute;z-index:20;width:210px;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(20,20,40,.18);padding:10px;pointer-events:auto}
+.pop .photo{height:120px;border-radius:8px}
+.pop .pt{font-weight:700;margin:8px 0 4px;font-size:13.5px;display:flex;justify-content:space-between;gap:6px;align-items:center}
+.pop dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:12px}
+.pop dt{color:var(--muted)} .pop dd{margin:0;font-family:var(--mono);font-size:11.5px;overflow-wrap:anywhere}
+.pop .hint{margin-top:8px;font-size:11px;color:var(--faint)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:12px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+select{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:8px;padding:6px 8px}
+
+/* table */
+.tools{display:flex;gap:8px;align-items:center}
+.search{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:8px;padding:7px 10px;font:inherit;font-size:13px;width:200px;max-width:100%}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:1040px}
+th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:0;border-bottom:1px solid var(--line);white-space:nowrap}
+th button{border:0;background:none;padding:10px 12px;font:inherit;color:inherit;text-transform:inherit;letter-spacing:inherit;display:flex;gap:4px;align-items:center;width:100%}
+th button .arr{opacity:.35;font-size:10px}
+th button[aria-sort] .arr{opacity:1;color:var(--accent)}
+td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--soft)}
+.asset{display:inline-block;font-family:var(--mono);font-size:11.5px;font-weight:500;padding:3px 7px;border-radius:6px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.dev{display:flex;align-items:center;gap:10px}
+.dev .mini{width:34px;height:34px;border-radius:8px;flex:none}
+.photo.mini .tag,.photo.thumb .tag{display:none}
+.photo.mini svg{width:70%;height:70%}
+td{white-space:nowrap}
+td .dev div{white-space:normal;min-width:150px}
+.dev small{display:block;color:var(--muted);font-size:11.5px}
+.empty{padding:24px;text-align:center;color:var(--muted)}
+
+/* modal */
+.scrim{position:fixed;inset:0;background:rgba(15,15,25,.45);z-index:50;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;
+  padding:max(24px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(24px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.modal{background:var(--card);border:1px solid var(--line);border-radius:14px;width:100%;max-width:880px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.m-head{display:flex;gap:12px;align-items:flex-start;padding:18px 20px;border-bottom:1px solid var(--line)}
+.m-head h2{margin:4px 0 6px;font-size:20px}
+.m-head .x{margin-left:auto;border:1px solid var(--line);background:var(--card);border-radius:8px;width:34px;height:34px;flex:none;font-size:18px;line-height:1}
+.m-body{padding:18px 20px;display:grid;grid-template-columns:240px minmax(0,1fr);gap:20px}
+.m-body .photo{height:220px;border-radius:12px}
+.m-side{display:flex;flex-direction:column;gap:10px}
+.m-side .note{font-size:12px;color:var(--faint)}
+.groups{display:flex;flex-direction:column;gap:16px;min-width:0}
+.group h4{margin:0 0 8px;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 18px;margin:0}
+.fields div{min-width:0}
+.fields dt{font-size:11.5px;color:var(--faint)}
+.fields dd{margin:0;font-size:13.5px;overflow-wrap:anywhere}
+.ifaces{width:100%;min-width:0;font-size:12.5px}
+.ifaces th{padding:6px 8px;font-size:10.5px}
+.ifaces td{padding:6px 8px;font-family:var(--mono);font-size:11.5px;cursor:default}
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.log li{display:grid;grid-template-columns:62px minmax(0,1fr);gap:12px;align-items:start}
+.date{border-radius:8px;text-align:center;padding:5px 0;font-weight:700;line-height:1.1}
+.date small{display:block;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.log b{font-size:13.5px} .log p{margin:2px 0 0;color:var(--muted);font-size:12.5px}
+
+/* view switch + photos */
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;padding:3px;background:var(--card);gap:2px}
+.seg button{border:0;background:none;padding:6px 12px;border-radius:7px;font-weight:600;font-size:13px;color:var(--muted);display:inline-flex;gap:6px;align-items:center}
+.seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
+.ph-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line)}
+.ph-bar input[type=range]{accent-color:var(--accent)}
+.ph-bar label{font-size:12px;color:var(--muted);font-weight:600}
+.ph-bar .grow{margin-left:auto;color:var(--faint);font-size:12px}
+.ph-body{padding:6px 16px 18px;display:flex;flex-direction:column;gap:6px}
+.ph-group h3{position:sticky;top:env(safe-area-inset-top,0px);z-index:2;background:var(--card);margin:0;padding:12px 0 8px;font-size:15px;display:flex;gap:8px;align-items:baseline}
+.ph-group h3 small{color:var(--muted);font-weight:500;font-size:12.5px}
+.ph-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--tile,150px),1fr));gap:4px}
+.ph{position:relative;aspect-ratio:1;border:0;padding:0;border-radius:6px;overflow:hidden;background:var(--soft)}
+.ph .photo{position:absolute;inset:0;border:0;border-radius:0}
+.ph .photo .tag{display:none}
+.ph .cap{position:absolute;left:0;right:0;bottom:0;padding:18px 8px 7px;text-align:left;color:#fff;background:linear-gradient(transparent,rgba(10,10,20,.72));font-size:12px;line-height:1.25}
+.ph .cap b{display:block;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ph .cap span{font-family:var(--mono);font-size:10.5px;opacity:.85}
+.ph .cap .net{display:none}
+.ph:hover .cap .net,.ph:focus-visible .cap .net{display:block}
+.ph .dot{position:absolute;top:7px;right:7px;width:11px;height:11px;border-radius:50%;border:2px solid var(--card)}
+.ph:hover .photo{filter:brightness(.96)}
+.ph-s1{--tile:110px}.ph-s2{--tile:150px}.ph-s3{--tile:210px}
+@media (max-width:520px){.ph-s1{--tile:80px}.ph-s2{--tile:104px}.ph-s3{--tile:150px}.ph .cap{padding:14px 6px 5px}.ph .cap span{display:none}}
+/* global search */
+.gs{position:relative;flex:1 1 280px;max-width:460px}
+.gs input{width:100%;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:9px;padding:9px 34px 9px 34px;font:inherit;font-size:13.5px}
+.gs input:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+.gs svg.mag{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--faint)}
+.gs kbd{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:11px;color:var(--faint);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+.sugg{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:30;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(20,20,40,.16);padding:6px;max-height:380px;overflow-y:auto}
+.sugg button{display:flex;gap:10px;align-items:center;width:100%;border:0;background:none;padding:7px 8px;border-radius:8px;text-align:left}
+.sugg button[aria-selected="true"],.sugg button:hover{background:var(--soft)}
+.sugg .mini{width:32px;height:32px;border-radius:7px;flex:none}
+.sugg .mini .tag{display:none}
+.sugg .txt{min-width:0;flex:1}
+.sugg .txt b{font-size:13px;display:block}
+.sugg .txt small{color:var(--muted);font-size:11.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sugg .hit{font-size:11px;color:var(--faint);white-space:nowrap}
+.sugg .foot{font-size:11.5px;color:var(--faint);padding:6px 8px 2px;border-top:1px solid var(--line);margin-top:4px}
+@media (max-width:520px){.sugg .hit,.sugg .pill{display:none}}
+mark{background:var(--warn-soft);color:inherit;border-radius:3px;padding:0 1px}
+.filter-note{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--muted)}
+.filter-note button{border:0;background:none;color:var(--accent);font-weight:600;padding:0}
+/* reports */
+:root{--paper:#ffffff;--paper-fg:#1b1b24;--paper-muted:#666677;--paper-line:#e3e3ea;--paper-head:#f4f4f8}
+.rp{display:grid;grid-template-columns:290px minmax(0,1fr);gap:16px;align-items:start}
+.rp-side{padding:16px;display:flex;flex-direction:column;gap:14px}
+.rp-side h4{margin:0 0 6px;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.rp-side select,.rp-side input[type=text]{width:100%}
+.rp-side input[type=text]{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:8px;padding:7px 9px}
+.chk{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:12.5px}
+.chk label{display:flex;gap:6px;align-items:center;cursor:pointer}
+.chk input,.opt input{accent-color:var(--accent)}
+.opt{display:flex;flex-direction:column;gap:6px;font-size:12.5px}
+.opt label{display:flex;gap:7px;align-items:center;cursor:pointer}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.two label{font-size:11.5px;color:var(--muted);display:block;margin-bottom:3px}
+.rp-btns{display:flex;flex-wrap:wrap;gap:8px}
+.rp-main{display:flex;flex-direction:column;gap:10px;min-width:0}
+.rp-hint{font-size:12px;color:var(--faint)}
+.paper-wrap{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:18px;overflow:hidden}
+.paper{background:var(--paper);color:var(--paper-fg);width:816px;margin:0 auto;box-shadow:0 2px 10px rgba(0,0,0,.12);padding:36px 40px;font-size:11.5px;color-scheme:light}
+.paper .ph1{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;border-bottom:2px solid var(--paper-fg);padding-bottom:10px}
+.paper h2{margin:0;font-size:20px;letter-spacing:-.01em}
+.paper .org{color:var(--paper-muted);font-size:11px;text-align:right;line-height:1.5}
+.paper .flt{color:var(--paper-muted);margin:8px 0 12px;font-size:11px}
+.paper .sum{display:flex;gap:22px;flex-wrap:wrap;margin-bottom:14px}
+.paper .sum div{display:flex;flex-direction:column}
+.paper .sum b{font-size:17px} .paper .sum span{color:var(--paper-muted);font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+.paper table{min-width:0;font-size:10.5px;width:100%}
+.paper th{white-space:normal;color:var(--paper-muted);background:var(--paper-head);padding:6px 6px;font-size:9.5px;border-bottom:1px solid var(--paper-line)}
+.paper td .mono{white-space:nowrap}
+.paper td{padding:5px 6px;border-bottom:1px solid var(--paper-line);white-space:normal;cursor:default}
+.paper tbody tr:hover{background:none}
+.paper .grp td{background:none;font-weight:700;font-size:11.5px;padding-top:12px;border-bottom:1.5px solid var(--paper-fg)}
+.paper .pimg{width:28px;height:28px;border-radius:5px;background:#f0effb;color:#5b4be6;display:grid;place-items:center}
+.paper .pimg svg{width:20px;height:20px}
+.paper .st{font-weight:600}
+.paper .st.bad{color:#c42f2f}.paper .st.warn{color:#9a5c00}.paper .st.ok{color:#127a4c}.paper .st.info{color:#2a62c4}
+.paper .pf{margin-top:18px;padding-top:8px;border-top:1px solid var(--paper-line);display:flex;justify-content:space-between;color:var(--paper-muted);font-size:10px}
+@media (max-width:820px){.rp{grid-template-columns:1fr}}
+@media print{
+  .paper{zoom:1!important;width:auto!important}
+  body{background:#fff;padding:0} .wrap>*:not(#viewReports){display:none!important}
+  #viewReports .rp-side,#viewReports .rp-hint,#viewReports .card-h{display:none!important}
+  #viewReports,.rp,.paper-wrap{display:block;border:0;background:none;padding:0;box-shadow:none}
+  .paper{box-shadow:none;min-width:0;max-width:none;padding:0}
+}
+/* add device + QR labels */
+.lm{max-width:960px}
+.lm-body{padding:18px 20px;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:22px}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px;align-content:start}
+.form .full{grid-column:1/-1}
+.form label{display:block;font-size:11.5px;color:var(--muted);font-weight:600;margin-bottom:4px}
+.form input,.form select,.lopts input[type=text],.lopts input[type=number],.lopts select{width:100%;font:inherit;font-size:13px;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:8px;padding:7px 9px}
+.form .req::after{content:" *";color:var(--bad)}
+.nextno{display:flex;align-items:center;gap:10px;background:var(--accent-soft);border-radius:10px;padding:10px 12px;font-size:12.5px;color:var(--muted)}
+.nextno .asset{font-size:15px;padding:4px 9px;background:var(--card)}
+.lside{display:flex;flex-direction:column;gap:12px}
+.lstage{background:repeating-linear-gradient(45deg,var(--soft),var(--soft) 8px,var(--bg) 8px,var(--bg) 16px);border:1px solid var(--line);border-radius:12px;padding:22px 12px;display:grid;place-items:center;min-height:190px}
+.lstage small{display:block;text-align:center;color:var(--faint);font-size:11px;margin-top:10px}
+.label{background:#fff;color:#111;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.18);display:flex;gap:8px;padding:8px;overflow:hidden;font-family:"Inter",system-ui,sans-serif;color-scheme:light}
+.label .qr{flex:none;aspect-ratio:1;height:100%;display:grid;place-items:center}
+.label .qr svg{width:100%;height:100%;display:block}
+.label .lt{min-width:0;display:flex;flex-direction:column;justify-content:center;gap:1px;line-height:1.15}
+.label .la{font-family:"JetBrains Mono",ui-monospace,monospace;font-weight:700;letter-spacing:.02em}
+.label .lh{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.label .ls{color:#444;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.label.sq{flex-direction:column;align-items:center;gap:3px;padding:6px}
+.label.sq .qr{height:auto;width:76%}
+.label.sq .lt{align-items:center;text-align:center}
+.lopts{display:flex;flex-direction:column;gap:10px;font-size:12.5px}
+.lopts h4{margin:0 0 4px;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.lopts .ck{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px}
+.lopts .ck label{display:flex;gap:6px;align-items:center;cursor:pointer}
+.lopts input[type=checkbox]{accent-color:var(--accent)}
+.lopts .row2{display:grid;grid-template-columns:1fr 90px;gap:8px}
+.lopts .row2 label,.lopts > div > label{font-size:11.5px;color:var(--muted);display:block;margin-bottom:3px}
+.lfoot{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--line)}
+.err{color:var(--bad);font-size:12px}
+@media (max-width:820px){.lm-body{grid-template-columns:1fr}}
+@media (max-width:520px){.form{grid-template-columns:1fr}}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:13px;z-index:80;max-width:calc(100% - 32px)}
+
+@media (max-width:820px){
+  .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .m-body{grid-template-columns:1fr}
+  .m-body .photo{height:180px}
+}
+@media (max-width:520px){
+  .attn{grid-template-columns:1fr}
+  .attn .thumb{width:64px;height:64px}
+  .fields{grid-template-columns:1fr}
+  .tile .big{font-size:24px}
+  .pin{width:22px;height:22px} .pin svg{width:12px;height:12px}
+  .search{width:100%}
+  .tools{width:100%}
+  .sample{margin-left:0;width:100%}
+}
+</style>
+
+<div class="wrap">
+  <header class="head">
+    <div class="title-row">
+      <div class="logo" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></div>
+      <h1>iTIMS <span style="font-weight:500;color:var(--muted);font-size:15px;letter-spacing:0">IT Inventory Management System</span></h1>
+      <span id="headPill" class="pill c-warn">Needs attention</span>
+    </div>
+    <div class="summary" id="summary"></div>
+    <div class="actions">
+      <button class="btn primary" data-action="add"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Add device</button>
+      <button class="btn" data-mock="Import CSV loads devices in bulk from a spreadsheet or network scan in the real build.">Import CSV</button>
+      <button class="btn" data-mock="Scan QR opens the camera and jumps to the device whose label you scanned, in the real build.">Scan QR label</button>
+      <div class="seg" role="group" aria-label="View"><button id="vDash" data-view="dash" aria-pressed="true">Dashboard</button><button id="vPhotos" data-view="photos" aria-pressed="false">Photos</button><button id="vReports" data-view="reports" aria-pressed="false">Reports</button></div>
+      <span class="sample">Mockup with sample devices · Main Plant, Floor 1</span>
+    </div>
+    <div class="actions" style="margin-top:4px">
+      <div class="gs">
+        <label for="q" style="position:absolute;left:-9999px">Search all devices</label>
+        <svg class="mag" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+        <input id="q" type="search" autocomplete="off" placeholder="Search asset #, type, hostname, IP, MAC, user, location…" role="combobox" aria-expanded="false" aria-controls="sugg">
+        <kbd id="kbd">/</kbd>
+        <div class="sugg" id="sugg" role="listbox" hidden></div>
+      </div>
+      <div class="filter-note" id="filterNote" hidden></div>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" id="tabs"></nav>
+
+  <div id="viewDash" style="display:flex;flex-direction:column;gap:18px">
+  <section class="tiles" id="tiles"></section>
+
+  <section class="card" id="attn"></section>
+
+  <section class="card">
+    <div class="card-h">
+      <div class="hi"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg></div>
+      <div><h2>Floorplan</h2><p>Hover or tap a pin for a preview. Click again to open the device.</p></div>
+      <div class="right">
+        <label for="floorSel" class="sr" style="font-size:12px;color:var(--muted)">Floor</label>
+        <select id="floorSel"><option>Main Plant · Floor 1</option><option disabled>Main Plant · Mezzanine (upload a plan)</option></select>
+        <button class="btn" data-mock="Upload floorplan accepts a PNG, JPG or PDF of each floor in the real build. Pins are then dragged into place.">Upload floorplan</button>
+      </div>
+    </div>
+    <div class="plan-wrap">
+      <div class="plan" id="plan">
+        <svg class="fp" viewBox="0 0 1000 600" aria-label="Test floorplan of Main Plant, Floor 1" role="img">
+          <g fill="var(--plan-room)" stroke="var(--plan-wall)" stroke-width="3">
+            <rect x="10" y="10" width="980" height="580" rx="4"/>
+          </g>
+          <g fill="none" stroke="var(--plan-wall)" stroke-width="2">
+            <path d="M360 10V400M10 260H360M200 260V400M10 400H990M360 170H500M360 260H500M500 10V400M620 400V590"/>
+          </g>
+          <!-- door gaps -->
+          <g stroke="var(--plan-room)" stroke-width="6">
+            <path d="M110 400h40M280 400h40M420 400h40M760 400h80M360 320v30M500 300v40M260 260h40M425 170h30M425 260h30M620 470v40"/>
+          </g>
+          <g stroke="var(--line)" stroke-width="1" stroke-dasharray="4 6">
+            <path d="M560 80h360M560 160h360M560 240h360M560 320h360"/>
+          </g>
+          <g fill="var(--plan-label)" font-family="Inter, system-ui, sans-serif" font-size="15" font-weight="600" letter-spacing="1.2">
+            <text x="30" y="40">OFFICE / ACCOUNTING</text>
+            <text x="30" y="285">RECEPTION</text>
+            <text x="215" y="285">BREAK ROOM</text>
+            <text x="372" y="38">SERVER ROOM</text>
+            <text x="372" y="195">IT CLOSET</text>
+            <text x="372" y="285">ENGINEERING</text>
+            <text x="520" y="40">PRODUCTION FLOOR</text>
+            <text x="30" y="425">WAREHOUSE · IDF-2</text>
+            <text x="640" y="425">SHIPPING / DOCK</text>
+          </g>
+          <g fill="var(--plan-label)" font-family="Inter, system-ui, sans-serif" font-size="11">
+            <text x="975" y="30" text-anchor="end">Test plan · not to scale</text>
+            
+          </g>
+        </svg>
+      </div>
+      <div class="legend" id="legend"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-h">
+      <div class="hi"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></div>
+      <div><h2 id="listTitle">All devices</h2><p>Click any column to sort. Click a row to open the full entry.</p></div>
+      
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr id="thead"></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+  </div>
+
+  <section class="card" id="viewPhotos" hidden>
+    <div class="card-h">
+      <div class="hi"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+      <div><h2 id="phTitle">Device photos</h2><p>Every device photo, grouped by the column you choose. Hover for IP and MAC, click to open.</p></div>
+    </div>
+    <div class="ph-bar">
+      <label for="groupBy">Group by</label>
+      <select id="groupBy">
+        <option value="sec">Section</option><option value="type">Device type</option><option value="room">Location</option>
+        <option value="cond">Condition</option><option value="life">Lifecycle</option><option value="make">Make</option>
+        <option value="dept">Owner / department</option><option value="crit">Criticality</option><option value="acqY">Year acquired</option>
+      </select>
+      <label for="sortIn">Sort within</label>
+      <select id="sortIn"><option value="id">Asset #</option><option value="host">Hostname</option><option value="ip">IP address</option><option value="acq">Date acquired</option></select>
+      <label for="phSize">Size</label>
+      <input id="phSize" type="range" min="1" max="3" step="1" value="2" style="width:90px">
+      <span class="grow" id="phCount"></span>
+    </div>
+    <div class="ph-body" id="phBody"></div>
+  </section>
+
+  <section class="card" id="viewReports" hidden>
+    <div class="card-h">
+      <div class="hi"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h7M9 9h3"/></svg></div>
+      <div><h2>Reports</h2><p>Start from a preset, then choose columns, filters and grouping. The preview is laid out for letter-size paper.</p></div>
+    </div>
+    <div class="rp">
+      <div class="rp-side">
+        <div><h4><label for="rPreset">Report</label></h4>
+          <select id="rPreset"></select></div>
+        <div><h4><label for="rTitle">Title</label></h4><input id="rTitle" type="text"></div>
+        <div><h4>Columns</h4><div class="chk" id="rCols"></div></div>
+        <div><h4>Filters</h4>
+          <div class="two">
+            <div><label for="rSec">Section</label><select id="rSec"></select></div>
+            <div><label for="rCond">Condition</label><select id="rCond"></select></div>
+            <div><label for="rLife">Lifecycle</label><select id="rLife"></select></div>
+            <div><label for="rLoc">Location</label><select id="rLoc"></select></div>
+          </div>
+          <div class="rp-hint" style="margin-top:6px">The header search box also narrows the report.</div></div>
+        <div class="two">
+          <div><label for="rGroup">Group by</label><select id="rGroup"></select></div>
+          <div><label for="rSort">Sort by</label><select id="rSort"></select></div>
+        </div>
+        <div><h4>Options</h4><div class="opt">
+          <label><input type="checkbox" id="rPhotos">Show device photos</label>
+          <label><input type="checkbox" id="rSummary" checked>Show summary counts</label>
+          <label><input type="checkbox" id="rLandscape">Landscape page</label></div></div>
+        <div class="rp-btns">
+          <button class="btn primary" data-mock="Print opens your printer dialog with this page, or saves it as a PDF, in the real app. This mockup page is not allowed to open the print dialog.">Print / Save PDF</button>
+          <button class="btn" data-mock="Export CSV downloads exactly these rows and columns for Excel in the real app.">Export CSV</button>
+          <button class="btn" data-mock="Save as custom report adds this setup to the Report list so you can run it again with one click.">Save as custom report</button>
+        </div>
+      </div>
+      <div class="rp-main" style="padding:16px 16px 16px 0">
+        <div class="paper-wrap"><div class="paper" id="paper"></div></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div id="modalRoot"></div>
+<div id="toastRoot"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+const TODAY = new Date("2026-11-27T12:00:00");
+const SECTIONS = [
+  {id:"EU", name:"End User", full:"End User Devices"},
+  {id:"PR", name:"Printers", full:"Printers"},
+  {id:"NW", name:"Network", full:"Network Equipment"},
+  {id:"IN", name:"Industrial", full:"Industrial Equipment"},
+  {id:"SRV", name:"Infrastructure", full:"Infrastructure"}
+];
+const COND = {"Operational":"ok","Degraded":"warn","Down":"bad","Hardware Issue":"warn","Software Issue":"warn"};
+const LIFE = {"Hot Spare":"info","Deployed":"acc","In Stock":"off","On Order":"off","Needs Maintenance":"warn","Needs Replacement":"bad","Retired":"off","Disposed":"off"};
+
+/* Simple line drawings used as placeholder device photos */
+const P = {
+ laptop:'<rect x="5" y="6" width="14" height="9" rx="1"/><path d="M3 18h18l-1.5-3h-15z"/>',
+ desktop:'<rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M9 20h6M12 16v4"/>',
+ phone:'<rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/>',
+ tablet:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M11 18h2"/>',
+ scanner:'<path d="M8 3h8v9l2 2v7H6v-7l2-2z"/><path d="M10 6h4M9 16h6"/>',
+ printer:'<path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="1.5"/><path d="M7 14h10v7H7z"/>',
+ label:'<rect x="3" y="7" width="18" height="11" rx="1.5"/><path d="M8 7V4h8v3M8 18v3h8v-3M6 11h3"/>',
+ check:'<path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="1.5"/><path d="M7 14h10v7H7z"/><path d="M14 4.5l1 1 2-2" stroke-width="1.4"/>',
+ plotter:'<rect x="2" y="7" width="20" height="7" rx="1.5"/><path d="M5 14v7M19 14v7M6 10h12"/>',
+ switch:'<rect x="2" y="8" width="20" height="8" rx="1.5"/><path d="M5 12h1M8 12h1M11 12h1M14 12h1M17 12h2"/>',
+ router:'<rect x="3" y="12" width="18" height="7" rx="1.5"/><path d="M7 12V6M17 12V6M7 15.5h.01M10 15.5h.01"/>',
+ firewall:'<path d="M3 5h18v14H3zM3 9.7h18M3 14.3h18M9 5v4.7M15 9.7v4.6M9 14.3V19"/>',
+ ap:'<ellipse cx="12" cy="15" rx="8" ry="3.5"/><path d="M8.5 8.5a5 5 0 0 1 7 0M6 6a8.5 8.5 0 0 1 12 0"/>',
+ radio:'<path d="M12 21V11"/><circle cx="12" cy="8" r="3"/><path d="M6 4a8 8 0 0 0 0 8M18 4a8 8 0 0 1 0 8M8 21h8"/>',
+ fiber:'<rect x="6" y="7" width="12" height="10" rx="1.5"/><path d="M2 10h4M2 14h4M18 12h4"/>',
+ plc:'<rect x="3" y="5" width="18" height="14" rx="1"/><path d="M7 5v14M11 5v14M15 5v14M4.5 8h1M8.5 8h1M12.5 8h1M16.5 8h3"/>',
+ hmi:'<rect x="3" y="4" width="18" height="13" rx="1.5"/><rect x="6" y="7" width="7" height="7"/><path d="M15.5 8h3M15.5 11h3M9 21h6M12 17v4"/>',
+ machine:'<rect x="3" y="6" width="18" height="13" rx="1"/><path d="M3 10h18M8 13h3v6M14 13h4v3h-4z"/>',
+ server:'<rect x="3" y="4" width="18" height="5" rx="1"/><rect x="3" y="10" width="18" height="5" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/><path d="M6 6.5h.01M6 12.5h.01M6 18h.01"/>',
+ nas:'<rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M8 7h8M8 10h8M8 13h8M8 17h.01"/>',
+ ups:'<rect x="6" y="3" width="12" height="18" rx="1.5"/><path d="M12.8 7l-2.6 4.5h3.6L11.2 16"/>',
+ camera:'<path d="M3 8h13l4-2v8l-4-2H3z"/><path d="M8 12v5M5 17h6"/>',
+ badge:'<rect x="7" y="3" width="10" height="18" rx="2"/><circle cx="12" cy="9" r="2.5"/><path d="M10 15h4M10 17.5h4"/>'
+};
+function ico(k, sw){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+(sw||1.5)+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(P[k]||P.desktop)+'</svg>';}
+function photo(k, cls){return '<div class="photo '+(cls||'')+'">'+ico(k,1.2)+'<span class="tag">PLACEHOLDER PHOTO</span></div>';}
+
+/* Sample devices. Fictional, for layout only. */
+const D = [
+ {id:"EU-0001",sec:"EU",type:"Laptop",k:"laptop",make:"Dell",model:"Latitude 7450",host:"LT-JSMITH",ip:"10.10.20.41",mac:"8C:47:BE:12:9A:01",room:"Office / Accounting",x:110,y:120,cond:"Operational",life:"Deployed",user:"J. Smith",dept:"Accounting",crit:"Medium",acq:"2025-03-14",war:"2028-03-14",eol:"2029-03-01",fw:"Windows 11 24H2",lastM:"2026-06-02",next:"2027-06-02",
+  extra:{"Domain / Directory":"Entra ID","MDM":"Intune","Disk encryption":"BitLocker","CPU / RAM / Storage":"Core Ultra 7 · 32 GB · 512 GB"}},
+ {id:"EU-0002",sec:"EU",type:"Desktop",k:"desktop",make:"HP",model:"EliteDesk 800 G9",host:"PC-FRONTDESK",ip:"10.10.20.52",mac:"3C:52:82:7D:11:B4",room:"Reception",x:90,y:340,cond:"Software Issue",life:"Deployed",user:"Front desk (shared)",dept:"Admin",crit:"Medium",acq:"2023-08-21",war:"2026-12-20",eol:"2028-08-01",fw:"Windows 11 23H2",lastM:"2026-02-10",next:"2027-02-10",note:"Outlook profile corrupt after update",
+  extra:{"Domain / Directory":"AD Domain","MDM":"Intune","Disk encryption":"BitLocker","CPU / RAM / Storage":"i5-12500 · 16 GB · 256 GB"},
+  tickets:[{n:"INC-10482",d:"2026-11-25",s:"Outlook will not open after Windows update",st:"Open"}]},
+ {id:"EU-0003",sec:"EU",type:"Phone",k:"phone",make:"Apple",model:"iPhone 15",host:"IPH-MGARCIA",ip:"10.10.40.18",mac:"F4:D4:88:2E:60:7C",room:"Office / Accounting",x:250,y:70,cond:"Operational",life:"Deployed",user:"M. Garcia",dept:"Operations",crit:"Low",acq:"2024-10-02",war:"2026-10-02",fw:"iOS 19.1",
+  extra:{"IMEI":"35 391811 223344 5","Phone number":"(555) 010-2231","Carrier":"Verizon","MDM":"Intune"}},
+ {id:"EU-0004",sec:"EU",type:"Tablet",k:"tablet",make:"Samsung",model:"Galaxy Tab Active5",host:"TAB-PROD01",ip:"10.10.40.33",mac:"A8:9C:ED:41:0F:22",room:"Production Floor",x:600,y:330,cond:"Operational",life:"Deployed",user:"Line 1 (shared)",dept:"Production",crit:"Medium",acq:"2025-01-15",war:"2027-01-15",fw:"Android 15",
+  extra:{"MDM":"Intune","Disk encryption":"Device default"}},
+ {id:"EU-0005",sec:"EU",type:"Handheld Scanner",k:"scanner",make:"Zebra",model:"TC58",host:"SCN-SHIP03",ip:"10.10.40.71",mac:"00:07:4D:AA:31:9E",room:"Shipping / Dock",x:700,y:500,cond:"Hardware Issue",life:"Needs Maintenance",user:"Shipping (shared)",dept:"Shipping",crit:"High",acq:"2024-04-09",war:"2027-04-09",fw:"Android 13 · LifeGuard 41",lastM:"2026-05-19",next:"2026-11-19",note:"Trigger button sticks; battery swells",
+  extra:{"Battery / Cradle":"BTRY-TC5X-46MA · 5-slot cradle","MDM":"SOTI"},
+  tickets:[{n:"INC-10455",d:"2026-11-18",s:"Scan trigger intermittent",st:"Open"}]},
+ {id:"EU-0006",sec:"EU",type:"Laptop",k:"laptop",make:"Lenovo",model:"ThinkPad T14 Gen 5",host:"LT-SPARE01",ip:"DHCP",mac:"98:FA:9B:C0:44:10",room:"IT Closet",x:400,y:225,cond:"Operational",life:"Hot Spare",dept:"IT",crit:"Low",acq:"2025-09-30",war:"2028-09-30",fw:"Windows 11 24H2",
+  extra:{"Domain / Directory":"Entra ID","MDM":"Intune","Disk encryption":"BitLocker"}},
+ {id:"PR-0001",sec:"PR",type:"Laser",k:"printer",make:"HP",model:"LaserJet Enterprise M611",host:"PRN-OFFICE1",ip:"10.10.30.11",mac:"10:E7:C6:5B:2A:3F",room:"Office / Accounting",x:300,y:200,cond:"Operational",life:"Deployed",dept:"Admin",crit:"Medium",acq:"2024-02-12",war:"2027-02-12",lastM:"2026-09-03",next:"2027-03-03",
+  extra:{"Connection":"Network","Queue":"\\\\PRINT01\\Office-Laser","Consumables":"W1470A toner","Page count":"84,210 (Nov 20)"}},
+ {id:"PR-0002",sec:"PR",type:"Label",k:"label",make:"Zebra",model:"ZT411",host:"PRN-SHIPLBL1",ip:"10.10.30.24",mac:"00:07:4D:61:B8:02",room:"Shipping / Dock",x:900,y:470,cond:"Operational",life:"Deployed",dept:"Shipping",crit:"High",acq:"2023-06-01",war:"2026-12-31",lastM:"2026-10-14",next:"2026-12-14",
+  extra:{"Connection":"Network","Label / media size":"4 × 6 in thermal transfer","Consumables":"Ribbon 05555BK11045"}},
+ {id:"PR-0003",sec:"PR",type:"Check",k:"check",make:"Troy",model:"MICR 408",host:"PRN-CHECK1",ip:"10.10.30.31",mac:"B0:5C:DA:09:E1:77",room:"Office / Accounting",x:60,y:200,cond:"Operational",life:"Deployed",dept:"Accounting",crit:"High",acq:"2022-11-08",war:"2025-11-08",eol:"2027-12-31",
+  extra:{"MICR toner":"Yes","Secured location":"Yes · locked cabinet","Connection":"Network"}},
+ {id:"PR-0004",sec:"PR",type:"Plotter",k:"plotter",make:"HP",model:"DesignJet T650",host:"PRN-PLOT1",ip:"10.10.30.40",mac:"7C:4D:8F:22:A0:5D",room:"Engineering",x:445,y:350,cond:"Degraded",life:"Needs Maintenance",dept:"Engineering",crit:"Low",acq:"2021-05-17",war:"2023-05-17",lastM:"2026-03-02",next:"2026-09-02",note:"Streaking on long prints; printhead due",
+  extra:{"Label / media size":"36 in roll","Consumables":"HP 712 ink set"}},
+ {id:"NW-0001",sec:"NW",type:"Firewall",k:"firewall",make:"Fortinet",model:"FortiGate 100F",host:"FW-MAIN",ip:"10.10.0.1",mac:"E8:1C:BA:4F:00:10",room:"Server Room",x:385,y:78,cond:"Operational",life:"Deployed",dept:"IT",crit:"Critical",acq:"2024-07-01",war:"2027-07-01",fw:"FortiOS 7.4.8",lastM:"2026-10-01",next:"2027-01-01",
+  extra:{"License expires":"2027-07-01","Config backup":"2026-11-20","HA partner":"None"},
+  ifaces:[["WAN1","203.0.113.10","E8:1C:BA:4F:00:11","Static","-"],["LAN","10.10.0.1","E8:1C:BA:4F:00:10","Static","1"],["OT","10.20.0.1","E8:1C:BA:4F:00:12","Static","20"]]},
+ {id:"NW-0002",sec:"NW",type:"Switch",k:"switch",make:"Cisco",model:"Catalyst 9200-48P",host:"SW-IDF2",ip:"10.10.0.12",mac:"70:B3:17:2C:9E:80",room:"Warehouse · IDF-2",x:300,y:470,cond:"Down",life:"Deployed",dept:"IT",crit:"Critical",acq:"2022-03-03",war:"2027-03-03",fw:"IOS-XE 17.12",lastM:"2026-04-11",next:"2027-04-11",note:"No response since 11:52 AM. Warehouse APs and scanners offline.",
+  extra:{"Port count / PoE":"48 · 740 W","Uplinks":"Te1/1/1 to SW-CORE Gi1/0/48","VLANs served":"1, 20, 40","Config backup":"2026-10-30"},
+  tickets:[{n:"INC-10491",d:"2026-11-27",s:"IDF-2 switch unreachable",st:"Open"},{n:"CHG-2210",d:"2026-04-11",s:"IOS-XE upgrade to 17.12",st:"Closed"}]},
+ {id:"NW-0003",sec:"NW",type:"Switch",k:"switch",make:"Cisco",model:"Catalyst 9300-48P",host:"SW-CORE",ip:"10.10.0.10",mac:"70:B3:17:A1:44:00",room:"Server Room",x:435,y:78,cond:"Operational",life:"Deployed",dept:"IT",crit:"Critical",acq:"2022-03-03",war:"2027-03-03",fw:"IOS-XE 17.12",lastM:"2026-04-11",next:"2027-04-11",
+  extra:{"Port count / PoE":"48 · 715 W","Stack / HA partner":"None","Config backup":"2026-11-20"}},
+ {id:"NW-0004",sec:"NW",type:"Access Point",k:"ap",make:"Ubiquiti",model:"U7 Pro",host:"AP-WH-01",ip:"10.10.0.41",mac:"9C:05:D6:3E:71:AA",room:"Warehouse · IDF-2",x:150,y:520,cond:"Down",life:"Deployed",dept:"IT",crit:"High",acq:"2025-02-20",war:"2027-02-20",fw:"7.1.66",note:"Powered by SW-IDF2 PoE",
+  extra:{"SSIDs":"Corp, Scanners","Controller":"UniFi on HV-01","Connected to":"NW-0002 port Gi1/0/12"}},
+ {id:"NW-0005",sec:"NW",type:"Point-to-Point Radio",k:"radio",make:"Ubiquiti",model:"airFiber 60 LR",host:"PTP-BLDG2-A",ip:"10.10.0.60",mac:"74:83:C2:11:F0:6B",room:"Shipping / Dock (roof)",x:950,y:540,cond:"Operational",life:"Deployed",dept:"IT",crit:"High",acq:"2023-09-12",war:"2025-09-12",fw:"2.6.2",
+  extra:{"Link partner":"PTP-BLDG2-B (Building 2)","Frequency / channel":"60 GHz · ch 2","Alignment":"-52 dBm"}},
+ {id:"NW-0006",sec:"NW",type:"Fiber Converter",k:"fiber",make:"TP-Link",model:"MC220L",host:"FMC-PROD",ip:"n/a",mac:"n/a",room:"Production Floor",x:950,y:70,cond:"Operational",life:"Deployed",dept:"IT",crit:"Medium",acq:"2021-12-01",
+  extra:{"Fiber type":"Multimode · 850 nm","Connector":"LC","Connected to":"NW-0003 port Te1/1/2"}},
+ {id:"IN-0001",sec:"IN",type:"PLC",k:"plc",make:"Allen-Bradley",model:"CompactLogix 5380",host:"PLC-LINE1",ip:"10.20.0.10",mac:"00:00:BC:5A:21:E3",room:"Production Floor",x:640,y:120,cond:"Operational",life:"Deployed",dept:"Production",crit:"Critical",acq:"2023-01-10",fw:"v35.011",
+  extra:{"Program":"LINE1_MAIN v4.2","Program backup":"2026-08-14","Protocols":"EtherNet/IP","Network segment":"OT","Downtime impact":"Line 1 stops"}},
+ {id:"IN-0002",sec:"IN",type:"Connected Machine",k:"machine",make:"Haas",model:"VF-2 CNC",host:"CNC-02",ip:"10.20.0.31",mac:"00:1B:0F:7C:30:91",room:"Production Floor",x:800,y:200,cond:"Operational",life:"Needs Maintenance",dept:"Production",crit:"High",acq:"2020-06-15",lastM:"2026-05-20",next:"2026-11-20",
+  extra:{"Protocols":"MTConnect","Network segment":"OT","Integrator / vendor":"Haas Factory Outlet"}},
+ {id:"IN-0003",sec:"IN",type:"HMI",k:"hmi",make:"Allen-Bradley",model:"PanelView Plus 7",host:"HMI-LINE1",ip:"10.20.0.11",mac:"00:00:BC:5A:22:10",room:"Production Floor",x:700,y:120,cond:"Operational",life:"Deployed",dept:"Production",crit:"High",acq:"2023-01-10",fw:"v13",
+  extra:{"Connected machine":"IN-0001 PLC-LINE1","Network segment":"OT"}},
+ {id:"SRV-0001",sec:"SRV",type:"Virtualization Host",k:"server",make:"Dell",model:"PowerEdge R760",host:"HV-01",ip:"10.10.1.10",mac:"B4:45:06:8E:12:40",room:"Server Room",x:400,y:135,cond:"Operational",life:"Deployed",dept:"IT",crit:"Critical",acq:"2024-05-06",war:"2029-05-06",fw:"Hyper-V Server 2025",lastM:"2026-10-01",next:"2027-04-01",
+  extra:{"Server role":"Hypervisor · DC01, FS01, ERP-DB","Out-of-band":"iDRAC 10.10.1.110","Backup":"Veeam nightly · 2026-11-27 02:00"},
+  ifaces:[["NIC1","10.10.1.10","B4:45:06:8E:12:40","Static","1"],["iDRAC","10.10.1.110","B4:45:06:8E:12:4F","Static","1"]]},
+ {id:"SRV-0002",sec:"SRV",type:"UPS",k:"ups",make:"APC",model:"Smart-UPS SRT 3000",host:"UPS-SRV1",ip:"10.10.1.20",mac:"28:29:86:3A:7B:C1",room:"Server Room",x:460,y:135,cond:"Operational",life:"Needs Maintenance",dept:"IT",crit:"Critical",acq:"2022-12-04",war:"2025-12-04",lastM:"2026-06-04",next:"2026-12-04",note:"Battery replacement due Dec 4",
+  extra:{"Battery installed":"2022-12-04","Battery replace due":"2026-12-04","Runtime / load":"18 min · 41%","Protects":"HV-01, SW-CORE, FW-MAIN, NAS-01"}},
+ {id:"SRV-0003",sec:"SRV",type:"Security Camera",k:"camera",make:"Axis",model:"P3265-LVE",host:"CAM-DOCK1",ip:"10.10.50.21",mac:"AC:CC:8E:4B:10:2D",room:"Shipping / Dock",x:840,y:560,cond:"Operational",life:"Deployed",dept:"Security",crit:"Medium",acq:"2024-08-19",war:"2029-08-19",
+  extra:{"Recorder":"NVR on HV-01","Resolution / retention":"1080p · 30 days"}},
+ {id:"SRV-0004",sec:"SRV",type:"Badge Reader",k:"badge",make:"HID",model:"Signo 40",host:"BDG-FRONT",ip:"10.10.50.40",mac:"00:06:8E:77:21:C9",room:"Reception",x:180,y:385,cond:"Software Issue",life:"Deployed",dept:"Security",crit:"High",acq:"2023-03-30",war:"2026-12-15",note:"Intermittent card read failures",
+  extra:{"Door / area":"Main entrance","Controller panel":"ACP-01 (IT Closet)"}},
+ {id:"SRV-0005",sec:"SRV",type:"Storage / NAS",k:"nas",make:"Synology",model:"RS1221+",host:"NAS-01",ip:"10.10.1.30",mac:"90:09:D0:2F:66:18",room:"Server Room",x:478,y:78,cond:"Operational",life:"Deployed",dept:"IT",crit:"High",acq:"2023-10-10",war:"2026-10-10",fw:"DSM 7.3",
+  extra:{"CPU / RAM / Storage / RAID":"8 × 8 TB · SHR-2","Backup":"Offsite sync · 2026-11-27 03:00"}}
+];
+
+/* helpers */
+const $ = s=>document.querySelector(s);
+const esc = s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const days = d=> d? Math.round((new Date(d+"T12:00:00")-TODAY)/864e5) : null;
+const fmt = d=> d? new Date(d+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}) : "—";
+const condCls = c=>"c-"+(COND[c]||"off");
+const lifeCls = l=>"c-"+(LIFE[l]||"off");
+const pinCls = d=> d.life==="Hot Spare" ? "info" : (COND[d.cond]||"off");
+const secOf = id=>SECTIONS.find(s=>s.id===id);
+const isIssue = d=>d.cond!=="Operational";
+const maintDue = d=>d.next && days(d.next)<=30;
+const warSoon = d=>d.war && days(d.war)>=0 && days(d.war)<=90;
+const CRIT = {Critical:4,High:3,Medium:2,Low:1};
+
+let state = {tab:"ALL", sort:"id", dir:1, q:"", pinned:null};
+try{ const t=localStorage.getItem("idc-tab"); if(t) state.tab=t; }catch(e){}
+
+function inTab(d){ return state.tab==="ALL" || d.sec===state.tab; }
+
+function renderHeader(){
+  const issues = D.filter(isIssue);
+  const down = D.filter(d=>d.cond==="Down");
+  const due = D.filter(maintDue).sort((a,b)=>a.next.localeCompare(b.next));
+  const nextUp = D.filter(d=>d.next && days(d.next)>=0).sort((a,b)=>a.next.localeCompare(b.next))[0];
+  const pill = $("#headPill");
+  if(down.length){pill.className="pill c-bad"; pill.textContent=down.length+" down";}
+  else if(issues.length){pill.className="pill c-warn"; pill.textContent=issues.length+" with issues";}
+  else {pill.className="pill c-ok"; pill.textContent="All operational";}
+  $("#summary").innerHTML =
+    '<span><b class="num">'+D.length+' devices</b> in 5 sections</span><span class="sep">·</span>'+
+    '<span><b class="num">'+issues.length+'</b> with issues</span><span class="sep">·</span>'+
+    '<span><b class="num">'+due.length+'</b> maintenance due</span>'+
+    (nextUp?'<span class="sep">·</span><span>Next: <b>'+esc(nextUp.host)+'</b> '+esc(fmt(nextUp.next).replace(/, \d{4}/,""))+'</span>':'');
+}
+
+function renderTabs(){
+  const tabs=[{id:"ALL",name:"All devices"}].concat(SECTIONS);
+  $("#tabs").innerHTML = tabs.map(t=>{
+    const n = t.id==="ALL"?D.length:D.filter(d=>d.sec===t.id).length;
+    return '<button class="tab" role="tab" id="tab-'+t.id+'" aria-selected="'+(state.tab===t.id)+'" data-tab="'+t.id+'">'+esc(t.name)+'<span class="count num">'+n+'</span></button>';
+  }).join("");
+}
+
+function tile(label, big, sub, foot, cls, icon){
+  return '<div class="tile"><div class="lbl">'+label+'<span class="ico '+cls+'">'+icon+'</span></div>'+
+    '<div class="big num">'+big+'</div><div class="sub">'+sub+'</div><div class="foot">'+foot+'</div></div>';
+}
+function renderTiles(){
+  const set = D.filter(inTab);
+  const iss = set.filter(isIssue), dn=set.filter(d=>d.cond==="Down");
+  const due = set.filter(maintDue), overdue=due.filter(d=>days(d.next)<0);
+  const war = set.filter(warSoon);
+  const spares = set.filter(d=>d.life==="Hot Spare").length;
+  const sv = w=>'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">'+w+'</svg>';
+  $("#tiles").innerHTML =
+    tile("Devices", set.length, state.tab==="ALL"?"across 5 sections":esc(secOf(state.tab).full), '<span>Hot spares</span><span class="num">'+spares+'</span>', "c-acc", sv('<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/>'))+
+    tile("Down / issues", '<span style="color:var(--bad)">'+iss.length+'</span>', dn.length? dn.length+" down, "+(iss.length-dn.length)+" degraded or faulted":"nothing down", '<span>Status</span><span style="color:'+(dn.length?'var(--bad)':'var(--ok)')+';font-weight:600">'+(dn.length?"Action needed":"Stable")+'</span>', "c-bad", sv('<path d="M12 8v5M12 16.5h.01"/><circle cx="12" cy="12" r="9"/>'))+
+    tile("Maintenance due", '<span style="color:var(--warn)">'+due.length+'</span>', "next 30 days or overdue", '<span>Overdue</span><span class="num">'+overdue.length+'</span>', "c-warn", sv('<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/>'))+
+    tile("Warranty expiring", '<span style="color:var(--info)">'+war.length+'</span>', "in the next 90 days", '<span>Soonest</span><span>'+(war.length?esc(war.sort((a,b)=>a.war.localeCompare(b.war))[0].host):"—")+'</span>', "c-info", sv('<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>'));
+}
+
+function renderAttention(){
+  const set = D.filter(inTab).filter(d=>isIssue(d)||maintDue(d));
+  set.sort((a,b)=>(b.cond==="Down")-(a.cond==="Down") || CRIT[b.crit]-CRIT[a.crit]);
+  const d = set[0];
+  const el = $("#attn");
+  if(!d){ el.innerHTML='<div class="attn"><div></div><div><span class="pill c-ok">All clear</span><h3>Nothing needs attention in this section</h3><p>Every device is operational and no maintenance is due in the next 30 days.</p></div><div></div></div>'; return; }
+  const why = d.cond!=="Operational" ? d.cond : "Maintenance due "+fmt(d.next);
+  el.innerHTML = '<div class="attn">'+photo(d.k,"thumb")+
+    '<div><span class="pill '+(d.cond==="Down"?"c-bad":"c-warn")+'">Needs attention · '+esc(d.crit)+'</span>'+
+    '<h3>'+esc(d.host)+' is '+esc(why.toLowerCase().startsWith("maint")?"due for maintenance":why.toLowerCase())+'</h3>'+
+    '<p>'+esc(d.note||(d.make+" "+d.model+" in "+d.room))+'</p>'+
+    '<div class="meta"><span class="asset">'+d.id+'</span><span>'+esc(d.make+" "+d.model)+'</span><span>'+esc(d.room)+'</span><span class="mono">'+esc(d.ip)+'</span></div></div>'+
+    '<div><button class="btn primary" data-open="'+d.id+'">Open device</button></div></div>';
+}
+
+/* floorplan */
+function renderPins(){
+  const plan=$("#plan");
+  plan.querySelectorAll(".pin,.pop").forEach(n=>n.remove());
+  D.forEach(d=>{
+    const b=document.createElement("button");
+    b.className="pin "+pinCls(d)+(inTab(d)&&matches(d)?"":" dim");
+    b.style.left=(d.x/10)+"%"; b.style.top=(d.y/6)+"%";
+    b.innerHTML=ico(d.k,2);
+    b.dataset.id=d.id;
+    b.setAttribute("aria-label",d.id+" "+d.host+", "+d.cond);
+    b.tabIndex = inTab(d)&&matches(d)?0:-1;
+    plan.appendChild(b);
+  });
+  $("#legend").innerHTML=[["ok","Operational"],["warn","Degraded / issue"],["bad","Down"],["info","Hot spare"]]
+    .map(([c,l])=>'<span><i style="background:var(--'+c+')"></i>'+l+'</span>').join("")+
+    '<span style="margin-left:auto;color:var(--faint)">'+D.filter(inTab).filter(matches).length+' of '+D.length+' devices shown</span>';
+}
+function showPop(id){
+  hidePop();
+  const d=D.find(x=>x.id===id), plan=$("#plan");
+  const pop=document.createElement("div"); pop.className="pop"; pop.dataset.for=id;
+  pop.innerHTML=photo(d.k)+'<div class="pt"><span>'+esc(d.host)+'</span><span class="pill '+condCls(d.cond)+'">'+esc(d.cond)+'</span></div>'+
+    '<dl><dt>Asset</dt><dd>'+d.id+'</dd><dt>IP</dt><dd>'+esc(d.ip)+'</dd><dt>MAC</dt><dd>'+esc(d.mac)+'</dd></dl>'+
+    '<div class="hint">'+esc(d.make+" "+d.model)+' · Click the pin to open</div>';
+  plan.appendChild(pop);
+  const W=plan.clientWidth, H=plan.clientHeight, px=d.x/1000*W, py=d.y/600*H, pw=pop.offsetWidth, ph=pop.offsetHeight;
+  let left=px+18, top=py-ph/2;
+  if(left+pw>W) left=px-18-pw;
+  if(left<0) left=Math.max(0,Math.min(W-pw,px-pw/2));
+  top=Math.max(-20,Math.min(H-ph+20,top));
+  if(W<520){ left=Math.max(0,Math.min(W-pw,px-pw/2)); top = py>H/2 ? py-ph-18 : py+18; }
+  pop.style.left=left+"px"; pop.style.top=top+"px";
+  state.pinned=id;
+}
+function hidePop(){ document.querySelectorAll(".pop").forEach(n=>n.remove()); state.pinned=null; }
+
+/* search across every field */
+function hay(d){ return [d.id,d.id.replace("-",""),secOf(d.sec).full,d.type,d.make,d.model,d.host,d.ip,d.mac,d.mac.replace(/:/g,""),d.user,d.dept,d.room,d.cond,d.life,d.crit,d.fw,d.note,
+  ...Object.entries(d.extra||{}).flat(),...(d.ifaces||[]).flat(),...(d.tickets||[]).map(t=>t.n+" "+t.s)].filter(Boolean).join(" | ").toLowerCase(); }
+function matches(d){ const q=state.q.trim().toLowerCase(); if(!q) return true; const h=hay(d); return q.split(/\s+/).every(w=>h.includes(w)); }
+function whereHit(d){ const q=state.q.trim().toLowerCase().split(/\s+/)[0]; if(!q) return "";
+  const f=[["Asset #",d.id],["Type",d.type],["Hostname",d.host],["IP",d.ip],["MAC",d.mac],["User",d.user],["Make",d.make+" "+d.model],["Location",d.room],["Condition",d.cond],["Lifecycle",d.life],["Owner",d.dept]]
+   .concat(Object.entries(d.extra||{})).concat((d.tickets||[]).map(t=>["Ticket",t.n+" "+t.s]));
+  const h=f.find(([k,v])=>String(v||"").toLowerCase().includes(q)); return h?h[0]:"Other field"; }
+function hl(text){ const q=state.q.trim().split(/\s+/)[0]; const t=String(text??""); if(!q) return esc(t);
+  const i=t.toLowerCase().indexOf(q.toLowerCase()); if(i<0) return esc(t);
+  return esc(t.slice(0,i))+'<mark>'+esc(t.slice(i,i+q.length))+'</mark>'+esc(t.slice(i+q.length)); }
+let suggIdx=-1;
+function renderSugg(){
+  const box=$("#sugg"), inp=$("#q"), q=state.q.trim();
+  if(!q || document.activeElement!==inp){ box.hidden=true; inp.setAttribute("aria-expanded","false"); return; }
+  const hits=D.filter(matches);
+  hits.sort((a,b)=>(b.id.toLowerCase()===q.toLowerCase())-(a.id.toLowerCase()===q.toLowerCase()));
+  box.innerHTML = hits.length ? hits.slice(0,7).map((d,i)=>'<button role="option" data-open="'+d.id+'" aria-selected="'+(i===suggIdx)+'">'+photo(d.k,"mini")+
+     '<span class="txt"><b>'+hl(d.id)+' · '+hl(d.host)+'</b><small>'+hl(d.type)+' · '+hl(d.make+" "+d.model)+' · '+hl(d.room)+'</small></span>'+
+     '<span class="pill '+condCls(d.cond)+'">'+esc(d.cond)+'</span><span class="hit">'+esc(whereHit(d))+'</span></button>').join("")+
+     '<div class="foot">'+hits.length+' match'+(hits.length>1?'es':'')+'. Enter opens the top match; the page below is filtered too.</div>'
+   : '<div class="foot" style="border:0;margin:0">No devices match “'+esc(q)+'”.</div>';
+  box.hidden=false; inp.setAttribute("aria-expanded","true");
+}
+function renderFilterNote(){
+  const n=$("#filterNote"), q=state.q.trim();
+  if(!q){ n.hidden=true; return; }
+  n.hidden=false; n.innerHTML='Showing '+D.filter(inTab).filter(matches).length+' matching “'+esc(q)+'” <button id="clearQ">Clear</button>';
+}
+function onSearch(){ renderTable(); renderPins(); if(state.view==="photos") renderPhotos(); if(typeof renderReport==="function"&&state.view==="reports") renderReport(); renderFilterNote(); renderSugg(); }
+
+/* table */
+const COLS=[["id","Asset #"],["type","Device"],["host","Hostname"],["ip","IP address"],["room","Location"],["who","Assigned / owner"],["cond","Condition"],["life","Lifecycle"],["next","Next maint."]];
+function val(d,k){ if(k==="who") return d.user||d.dept||""; if(k==="type") return d.type+" "+d.make+" "+d.model;
+  if(k==="ip") return d.ip.split(".").map(n=>isNaN(n)?n:n.padStart(3,"0")).join(".");
+  if(k==="id"){const [p,n]=d.id.split("-"); return SECTIONS.findIndex(s=>s.id===p)+"-"+n;}
+  if(k==="next") return d.next||"9999"; return d[k]||""; }
+function renderTable(){
+  $("#listTitle").textContent = state.tab==="ALL"?"All devices":secOf(state.tab).full;
+  $("#thead").innerHTML=COLS.map(([k,l])=>'<th><button data-sort="'+k+'"'+(state.sort===k?' aria-sort="'+(state.dir>0?"ascending":"descending")+'"':'')+'>'+l+'<span class="arr">'+(state.sort===k?(state.dir>0?"▲":"▼"):"↕")+'</span></button></th>').join("");
+  let rows=D.filter(inTab).filter(matches);
+  rows.sort((a,b)=>String(val(a,state.sort)).localeCompare(String(val(b,state.sort)),undefined,{numeric:true})*state.dir);
+  $("#tbody").innerHTML = rows.length? rows.map(d=>{
+    const nd=d.next?days(d.next):null;
+    const nm = d.next? '<span class="num" style="color:'+(nd<0?'var(--bad)':nd<=30?'var(--warn)':'var(--muted)')+'">'+esc(fmt(d.next))+(nd<0?' · overdue':'')+'</span>' : '<span style="color:var(--faint)">—</span>';
+    return '<tr data-open="'+d.id+'" tabindex="0"><td><span class="asset">'+d.id+'</span></td>'+
+      '<td><div class="dev">'+photo(d.k,"mini")+'<div>'+esc(d.type)+'<small>'+esc(d.make+" "+d.model)+'</small></div></div></td>'+
+      '<td class="mono">'+esc(d.host)+'</td><td class="mono">'+esc(d.ip)+'</td><td>'+esc(d.room)+'</td><td>'+esc(d.user||d.dept||"")+'</td>'+
+      '<td><span class="pill '+condCls(d.cond)+'">'+esc(d.cond)+'</span></td><td><span class="pill nodot '+lifeCls(d.life)+'">'+esc(d.life)+'</span></td><td>'+nm+'</td></tr>';
+  }).join("") : '<tr><td colspan="9" class="empty">No devices match “'+esc(state.q)+'”.</td></tr>';
+}
+
+/* detail */
+function openDevice(id){
+  hidePop();
+  const d=D.find(x=>x.id===id); if(!d) return;
+  const f=(pairs)=>'<dl class="fields">'+pairs.filter(p=>p[1]!==undefined).map(([k,v])=>'<div><dt>'+esc(k)+'</dt><dd>'+(v===""||v==null?'<span style="color:var(--faint)">—</span>':v)+'</dd></div>').join("")+'</dl>';
+  const ifs = d.ifaces || [["Primary",d.ip,d.mac,d.ip==="DHCP"?"DHCP":"Static",d.sec==="IN"?"20":d.sec==="SRV"&&d.k!=="server"&&d.k!=="nas"&&d.k!=="ups"?"50":"1"]];
+  const logs = [];
+  if(d.lastM) logs.push({d:d.lastM,t:"Preventive maintenance",p:"Inspected, cleaned, firmware checked. Performed by Rich F."});
+  if(d.acq) logs.push({d:d.acq,t:"Received and tagged",p:"Asset label printed on PRN-SHIPLBL1 and photo taken."});
+  const dateBox=(s,cls)=>{const x=new Date(s+"T12:00:00");return '<div class="date '+cls+'"><small>'+x.toLocaleDateString("en-US",{month:"short"})+'</small>'+x.getDate()+'</div>';};
+  const tix = (d.tickets||[]);
+  const html = '<div class="scrim" id="scrim"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">'+
+   '<div class="m-head"><div style="min-width:0"><span class="asset">'+d.id+'</span> <span style="color:var(--muted);font-size:12.5px">'+esc(secOf(d.sec).full)+' · '+esc(d.type)+'</span>'+
+     '<h2 id="mTitle">'+esc(d.host)+'</h2><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="pill '+condCls(d.cond)+'">'+esc(d.cond)+'</span><span class="pill nodot '+lifeCls(d.life)+'">'+esc(d.life)+'</span><span class="pill nodot c-off">'+esc(d.crit)+' criticality</span></div></div>'+
+     '<button class="x" id="mClose" aria-label="Close">×</button></div>'+
+   '<div class="m-body"><div class="m-side">'+photo(d.k)+
+     '<button class="btn" data-mock="Edit opens this entry for changes in the real build. Every change is written to the device\'s change log.">Edit device</button>'+
+     '<button class="btn" data-label="'+d.id+'">Print QR label</button>'+
+     '<button class="btn" data-mock="Log maintenance adds an entry here and updates Last and Next maintenance dates.">Log maintenance</button>'+
+     (d.note?'<div class="pill c-warn nodot" style="white-space:normal;border-radius:8px;padding:8px 10px">'+esc(d.note)+'</div>':'')+
+     '<div class="note">Sample data. Fields follow the field dictionary v2.</div></div>'+
+   '<div class="groups">'+
+     '<div class="group"><h4>Identity</h4>'+f([["Make",esc(d.make)],["Model",esc(d.model)],["Device type",esc(d.type)],["Hostname",'<span class="mono">'+esc(d.host)+'</span>'],["Serial number",'<span class="mono">'+esc(d.id.replace("-","")+"X"+d.mac.replace(/[^0-9A-F]/g,"").slice(-5))+'</span>'],["OS / firmware",esc(d.fw||"")]])+'</div>'+
+     '<div class="group"><h4>Network interfaces</h4><div class="tbl-wrap"><table class="ifaces" style="min-width:420px"><thead><tr><th>Name</th><th>IP</th><th>MAC</th><th>Addressing</th><th>VLAN</th></tr></thead><tbody>'+
+       ifs.map(r=>'<tr>'+r.map(c=>'<td>'+esc(c)+'</td>').join("")+'</tr>').join("")+'</tbody></table></div></div>'+
+     '<div class="group"><h4>Location and ownership</h4>'+f([["Site","Main Plant"],["Floor","Floor 1"],["Room / area",esc(d.room)],["Assigned user",esc(d.user||"")],["Owner / department",esc(d.dept||"")],["Last verified",fmt("2026-11-14")]])+'</div>'+
+     '<div class="group"><h4>Purchase and support</h4>'+f([["Date acquired",fmt(d.acq)],["Warranty expires",d.war?fmt(d.war)+(days(d.war)<0?' <span class="pill nodot c-off">expired</span>':warSoon(d)?' <span class="pill nodot c-info">soon</span>':''):""],["End of life",fmt(d.eol)],["Vendor","CDW"]])+'</div>'+
+     '<div class="group"><h4>'+esc(secOf(d.sec).full)+' details</h4>'+f(Object.entries(d.extra||{}).map(([k,v])=>[k,esc(v)]))+'</div>'+
+     '<div class="group"><h4>Maintenance</h4>'+f([["Last maintenance",fmt(d.lastM)],["Next due",d.next?fmt(d.next)+(days(d.next)<0?' <span class="pill nodot c-bad">overdue</span>':days(d.next)<=30?' <span class="pill nodot c-warn">due soon</span>':''):""]])+
+       (logs.length?'<ul class="log" style="margin-top:10px">'+logs.map(l=>'<li>'+dateBox(l.d,"c-ok")+'<div><b>'+esc(l.t)+'</b><p>'+esc(l.p)+'</p></div></li>').join("")+'</ul>':'')+'</div>'+
+     '<div class="group"><h4>Ticket history</h4>'+(tix.length?'<ul class="log">'+tix.map(t=>'<li>'+dateBox(t.d,t.st==="Open"?"c-warn":"c-off")+'<div><b><span class="mono">'+esc(t.n)+'</span> · '+esc(t.st)+'</b><p>'+esc(t.s)+'</p></div></li>').join("")+'</ul>':'<p style="margin:0;color:var(--muted);font-size:13px">No tickets linked yet.</p>')+'</div>'+
+   '</div></div></div></div>';
+  $("#modalRoot").innerHTML=html;
+  document.body.style.overflow="hidden";
+  $("#mClose").focus();
+}
+function closeModal(){ $("#modalRoot").innerHTML=""; document.body.style.overflow=""; }
+
+/* ---- QR labels ---- */
+const TYPES={EU:["Desktop","Laptop","All-in-One","Thin Client","Tablet","Phone","Handheld Scanner","Other"],
+ PR:["Laser","Inkjet","Label","Check","Plotter","Multifunction","Receipt","Other"],
+ NW:["Switch","Router","Firewall","Access Point","Wireless Controller","Fiber Converter","Point-to-Point Radio","Other"],
+ IN:["PLC","HMI","Connected Machine","I/O Module","Industrial Switch","Drive / VFD","Other"],
+ SRV:["Physical Server","Virtualization Host","Storage / NAS","UPS","PDU","Security Camera","NVR","Badge Reader","Access Control Panel","Other"]};
+const TYPE_ICON={"Desktop":"desktop","Laptop":"laptop","All-in-One":"desktop","Thin Client":"desktop","Tablet":"tablet","Phone":"phone","Handheld Scanner":"scanner",
+ "Laser":"printer","Inkjet":"printer","Label":"label","Check":"check","Plotter":"plotter","Multifunction":"printer","Receipt":"label",
+ "Switch":"switch","Router":"router","Firewall":"firewall","Access Point":"ap","Wireless Controller":"router","Fiber Converter":"fiber","Point-to-Point Radio":"radio",
+ "PLC":"plc","HMI":"hmi","Connected Machine":"machine","I/O Module":"plc","Industrial Switch":"switch","Drive / VFD":"plc",
+ "Physical Server":"server","Virtualization Host":"server","Storage / NAS":"nas","UPS":"ups","PDU":"ups","Security Camera":"camera","NVR":"nas","Badge Reader":"badge","Access Control Panel":"badge"};
+const ROOMS={"Office / Accounting":[180,140],"Reception":[100,330],"Break Room":[280,330],"Server Room":[430,110],"IT Closet":[430,215],"Engineering":[430,330],"Production Floor":[740,250],"Warehouse · IDF-2":[300,500],"Shipping / Dock":[800,500]};
+const SIZES={"2x1":{w:2,h:1,n:"2 × 1 in · standard asset tag"},"1x1":{w:1,h:1,n:"1 × 1 in · small devices, phones"},"3x2":{w:3,h:2,n:"3 × 2 in · racks, machines"},"1.25x0.5":{w:1.25,h:.5,n:"1.25 × 0.5 in · tiny, cables & scanners"}};
+let LOPT={size:"2x1",host:true,type:true,org:true,help:true,orgText:"Property of IT · Main Plant",helpText:"IT help: ext. 4357",enc:"id",copies:1,printer:"PRN-SHIPLBL1"};
+try{ const o=JSON.parse(localStorage.getItem("idc-lopt")||"null"); if(o) LOPT=Object.assign(LOPT,o);}catch(_){}
+function nextId(sec){ const n=D.filter(d=>d.sec===sec).map(d=>+d.id.split("-")[1]).reduce((a,b)=>Math.max(a,b),0)+1; return sec+"-"+String(n).padStart(n>9999?5:4,"0"); }
+function qrSvg(text){
+  if(typeof qrcode!=="function") return '<svg viewBox="0 0 10 10"><rect width="10" height="10" fill="#eee"/><text x="5" y="5.6" font-size="1.4" text-anchor="middle" fill="#999">QR</text></svg>';
+  const q=qrcode(0,"M"); q.addData(text); q.make();
+  return q.createSvgTag({cellSize:4,margin:0,scalable:true});
+}
+function qrText(d){ return LOPT.enc==="link" ? "https://itdb.example.com/d/"+d.id : d.id; }
+function labelHTML(d, scale){
+  const z=SIZES[LOPT.size], px=96*scale, W=z.w*px, H=z.h*px, sq=z.w===z.h, pad=Math.max(4,H*0.07);
+  const extra=[];
+  if(LOPT.host && d.host) extra.push(['lh',d.host]);
+  if(!sq || z.h>1){ if(LOPT.type) extra.push(['ls',d.type+(d.make?" · "+d.make+" "+(d.model||""):"")]);
+    if(LOPT.org && LOPT.orgText) extra.push(['ls',LOPT.orgText]);
+    if(LOPT.help && LOPT.helpText && z.h>=1) extra.push(['ls',LOPT.helpText]); }
+  let fsA, fs;
+  if(sq){ fsA=W*0.12; fs=W*0.085; }
+  const qs = sq? null : Math.min(H-pad*2, W*0.4);
+  if(!sq){ const textW=W-qs-pad*3, avail=H-pad*2;
+    fsA=Math.min(qs*0.24, textW/(d.id.length*0.62));
+    fs=extra.length? Math.min(H*0.13, fsA*0.62, (avail-fsA*1.2)/(extra.length*1.22)) : 0; }
+  const lines=['<div class="la" style="font-size:'+fsA.toFixed(1)+'px;white-space:nowrap">'+esc(d.id)+'</div>'].concat(
+    extra.map(([c,t])=>'<div class="'+c+'" style="font-size:'+fs.toFixed(1)+'px">'+esc(t)+'</div>'));
+  return '<div class="label'+(sq?' sq':'')+'" style="width:'+W+'px;height:'+H+'px;padding:'+pad+'px">'+
+    '<div class="qr"'+(qs?' style="height:'+qs.toFixed(1)+'px;align-self:center"':'')+'>'+qrSvg(qrText(d))+'</div><div class="lt">'+lines.join("")+'</div></div>';
+}
+function labelOptsHTML(){
+  const so=Object.entries(SIZES).map(([k,v])=>'<option value="'+k+'"'+(LOPT.size===k?' selected':'')+'>'+v.n+'</option>').join("");
+  const pr=D.filter(d=>d.sec==="PR"&&(d.type==="Label")).concat([{host:"Desktop label printer (USB)",id:"USB"}]).map(p=>'<option'+(LOPT.printer===p.host?' selected':'')+'>'+esc(p.host)+'</option>').join("");
+  return '<div class="lopts">'+
+   '<div><label for="lSize">Label size</label><select id="lSize">'+so+'</select></div>'+
+   '<div><h4>Print on label</h4><div class="ck">'+
+     '<label><input type="checkbox" id="lHost"'+(LOPT.host?' checked':'')+'>Hostname</label>'+
+     '<label><input type="checkbox" id="lType"'+(LOPT.type?' checked':'')+'>Type and model</label>'+
+     '<label><input type="checkbox" id="lOrg"'+(LOPT.org?' checked':'')+'>Owner line</label>'+
+     '<label><input type="checkbox" id="lHelp"'+(LOPT.help?' checked':'')+'>Help line</label></div></div>'+
+   '<div><label for="lOrgT">Owner line</label><input type="text" id="lOrgT" value="'+esc(LOPT.orgText)+'"></div>'+
+   '<div><label for="lHelpT">Help line</label><input type="text" id="lHelpT" value="'+esc(LOPT.helpText)+'"></div>'+
+   '<div><label for="lEnc">QR code contains</label><select id="lEnc"><option value="id"'+(LOPT.enc==="id"?' selected':'')+'>Asset number only (any scanner)</option><option value="link"'+(LOPT.enc==="link"?' selected':'')+'>Link that opens the device page</option></select></div>'+
+   '<div class="row2"><div><label for="lPrn">Printer</label><select id="lPrn">'+pr+'</select></div><div><label for="lCopies">Copies</label><input type="number" id="lCopies" min="1" max="20" value="'+LOPT.copies+'"></div></div>'+
+  '</div>';
+}
+function readLOPT(){
+  const g=id=>document.getElementById(id); if(!g("lSize")) return;
+  LOPT={size:g("lSize").value,host:g("lHost").checked,type:g("lType").checked,org:g("lOrg").checked,help:g("lHelp").checked,orgText:g("lOrgT").value,helpText:g("lHelpT").value,enc:g("lEnc").value,copies:Math.max(1,+g("lCopies").value||1),printer:g("lPrn").value};
+  try{localStorage.setItem("idc-lopt",JSON.stringify(LOPT))}catch(_){}
+}
+function stageHTML(d){
+  const z=SIZES[LOPT.size]; const scale = Math.min(1.6, 280/(z.w*96), 170/(z.h*96));
+  return labelHTML(d,scale)+'<small>'+(Math.abs(scale-1)<.05?"Actual size":"Shown at "+Math.round(scale*100)+"% of actual size")+' · QR holds “'+esc(qrText(d))+'”</small>';
+}
+let labelDev=null;
+function openLabel(id){
+  const d=D.find(x=>x.id===id); labelDev=d;
+  $("#modalRoot").innerHTML='<div class="scrim" id="scrim"><div class="modal lm" role="dialog" aria-modal="true" aria-labelledby="mTitle">'+
+   '<div class="m-head"><div><span class="asset">'+d.id+'</span><h2 id="mTitle">Print QR label</h2><p style="margin:0;color:var(--muted);font-size:13px">'+esc(d.host+" · "+d.type+" · "+d.make+" "+d.model)+'</p></div><button class="x" id="mClose" aria-label="Close">×</button></div>'+
+   '<div class="lm-body"><div class="lstage"><div id="lStage">'+stageHTML(d)+'</div></div>'+labelOptsHTML()+'</div>'+
+   '<div class="lfoot"><button class="btn" data-back="'+d.id+'">Back to device</button><button class="btn primary" id="lPrint">Print label</button></div></div></div>';
+  document.body.style.overflow="hidden";
+}
+function openAdd(){
+  labelDev=null;
+  const secOpts=SECTIONS.map(x=>'<option value="'+x.id+'">'+esc(x.full)+'</option>').join("");
+  const roomOpts=Object.keys(ROOMS).map(r=>'<option>'+esc(r)+'</option>').join("");
+  $("#modalRoot").innerHTML='<div class="scrim" id="scrim"><div class="modal lm" role="dialog" aria-modal="true" aria-labelledby="mTitle">'+
+   '<div class="m-head"><div><h2 id="mTitle">Add a device</h2><p style="margin:0;color:var(--muted);font-size:13px">The asset number is assigned from the section. The label updates as you type.</p></div><button class="x" id="mClose" aria-label="Close">×</button></div>'+
+   '<div class="lm-body"><form class="form" id="addForm" novalidate>'+
+     '<div class="full nextno">Next asset number <span class="asset" id="nNo"></span><span>never reused</span></div>'+
+     '<div><label for="fSec" class="req">Section</label><select id="fSec">'+secOpts+'</select></div>'+
+     '<div><label for="fType" class="req">Device type</label><select id="fType"></select></div>'+
+     '<div><label for="fMake" class="req">Make</label><input id="fMake" list="makes" placeholder="Dell"></div>'+
+     '<div><label for="fModel" class="req">Model</label><input id="fModel" placeholder="Latitude 7450"></div>'+
+     '<div><label for="fHost">Hostname</label><input id="fHost" placeholder="LT-NEWHIRE01" style="font-family:var(--mono)"></div>'+
+     '<div><label for="fSerial">Serial number</label><input id="fSerial" style="font-family:var(--mono)"></div>'+
+     '<div><label for="fIp">IP address</label><input id="fIp" placeholder="DHCP" style="font-family:var(--mono)"></div>'+
+     '<div><label for="fMac">MAC address</label><input id="fMac" placeholder="AA:BB:CC:DD:EE:FF" style="font-family:var(--mono)"></div>'+
+     '<div><label for="fRoom" class="req">Location</label><select id="fRoom">'+roomOpts+'</select></div>'+
+     '<div><label for="fUser">Assigned user</label><input id="fUser" placeholder="Optional"></div>'+
+     '<div><label for="fCond">Condition</label><select id="fCond">'+Object.keys(COND).map(c=>'<option>'+c+'</option>').join("")+'</select></div>'+
+     '<div><label for="fLife">Lifecycle</label><select id="fLife">'+Object.keys(LIFE).map(c=>'<option'+(c==="In Stock"?' selected':'')+'>'+c+'</option>').join("")+'</select></div>'+
+     '<datalist id="makes">'+[...new Set(D.map(d=>d.make))].sort().map(m=>'<option value="'+esc(m)+'">').join("")+'</datalist>'+
+     '<div class="full err" id="fErr" hidden></div>'+
+   '</form><div class="lside"><div class="lstage"><div id="lStage"></div></div>'+labelOptsHTML()+'</div></div>'+
+   '<div class="lfoot"><button class="btn" id="mCancel">Cancel</button><button class="btn" id="fSaveOnly">Save without label</button><button class="btn primary" id="fSave">Save and print label</button></div></div></div>';
+  document.body.style.overflow="hidden";
+  fillTypes(); updateAdd(); $("#fMake").focus();
+}
+function fillTypes(){ const sec=$("#fSec").value; $("#fType").innerHTML=TYPES[sec].map(t=>'<option>'+esc(t)+'</option>').join(""); }
+function draft(){
+  const sec=$("#fSec").value, type=$("#fType").value;
+  return {id:nextId(sec),sec,type,k:TYPE_ICON[type]||"desktop",make:$("#fMake").value.trim(),model:$("#fModel").value.trim(),host:$("#fHost").value.trim().toUpperCase(),
+    ip:$("#fIp").value.trim()||"DHCP",mac:$("#fMac").value.trim().toUpperCase()||"—",room:$("#fRoom").value,user:$("#fUser").value.trim(),dept:"",cond:$("#fCond").value,life:$("#fLife").value,crit:"Medium",acq:"2026-11-27",extra:{}};
+}
+function updateAdd(){ const d=draft(); $("#nNo").textContent=d.id; $("#lStage").innerHTML=stageHTML(Object.assign({},d,{make:d.make||"Make",model:d.model||"Model"})); }
+function saveAdd(withLabel){
+  const d=draft(), miss=[]; if(!d.make) miss.push("Make"); if(!d.model) miss.push("Model");
+  if(miss.length){ const e=$("#fErr"); e.hidden=false; e.textContent="Add "+miss.join(" and ")+" to save this device."; return; }
+  if(D.some(x=>x.mac!=="—"&&x.mac===d.mac)){ const e=$("#fErr"); e.hidden=false; e.textContent="That MAC address already belongs to "+D.find(x=>x.mac===d.mac).id+". MAC addresses must be unique."; return; }
+  if(!d.host) d.host=d.id;
+  const [x,y]=ROOMS[d.room]; d.x=x+(Math.random()*60-30); d.y=y+(Math.random()*40-20);
+  D.push(d); renderAll(); closeModal();
+  if(withLabel){ openLabel(d.id); toast(d.id+" saved. Mockup only: it disappears when you reload."); }
+  else toast(d.id+" saved without a label. Mockup only: it disappears when you reload.");
+}
+
+let toastT;
+function toast(msg){ $("#toastRoot").innerHTML='<div class="toast" role="status">'+esc(msg)+'</div>'; clearTimeout(toastT); toastT=setTimeout(()=>$("#toastRoot").innerHTML="",3800); }
+
+const GROUP_ORDER = {
+  sec:SECTIONS.map(x=>x.id), cond:["Down","Hardware Issue","Software Issue","Degraded","Operational"],
+  life:["Needs Replacement","Needs Maintenance","Deployed","Hot Spare","In Stock","On Order","Retired","Disposed"], crit:["Critical","High","Medium","Low"]};
+function gval(d,k){ if(k==="acqY") return d.acq?d.acq.slice(0,4):"Unknown"; if(k==="room") return d.room.replace(/ \(.*\)$/,""); return d[k]||"Unassigned"; }
+function glabel(k,v){ return k==="sec"? secOf(v).full : v; }
+function renderPhotos(){
+  const k=$("#groupBy").value, si=$("#sortIn").value;
+  $("#phBody").className="ph-body ph-s"+$("#phSize").value;
+  const set=D.filter(inTab).filter(matches);
+  const groups={}; set.forEach(d=>{(groups[gval(d,k)]=groups[gval(d,k)]||[]).push(d);});
+  const ord=GROUP_ORDER[k];
+  const keys=Object.keys(groups).sort((a,b)=> ord? (ord.indexOf(a)-ord.indexOf(b)) : (k==="acqY"? b.localeCompare(a) : a.localeCompare(b)));
+  $("#phTitle").textContent = state.tab==="ALL"?"Device photos":secOf(state.tab).full+" photos";
+  $("#phCount").textContent = set.length+" photos in "+keys.length+" groups";
+  $("#phBody").innerHTML = keys.length? keys.map(g=>{
+    const items=groups[g].sort((a,b)=>String(val(a,si)).localeCompare(String(val(b,si)),undefined,{numeric:true}));
+    return '<div class="ph-group"><h3>'+esc(glabel(k,g))+' <small>'+items.length+' device'+(items.length>1?'s':'')+'</small></h3><div class="ph-grid">'+
+      items.map(d=>'<button class="ph" data-open="'+d.id+'" aria-label="'+esc(d.id+" "+d.host)+'">'+photo(d.k)+
+        '<i class="dot" style="background:var(--'+pinCls(d)+')"></i>'+
+        '<div class="cap"><b>'+esc(d.host)+'</b><span>'+d.id+'</span><div class="net"><span>'+esc(d.ip)+'</span><br><span>'+esc(d.mac)+'</span></div></div></button>').join("")+'</div></div>';
+  }).join("") : '<div class="empty">No devices match.</div>';
+}
+/* reports */
+const RCOLS=[["id","Asset #"],["photo","Photo"],["sec","Section"],["type","Type"],["make","Make"],["model","Model"],["host","Hostname"],["ip","IP address"],["mac","MAC address"],["room","Location"],["user","Assigned user"],["dept","Owner / dept."],["cond","Condition"],["life","Lifecycle"],["crit","Criticality"],["acq","Acquired"],["war","Warranty"],["eol","End of life"],["lastM","Last maint."],["next","Next maint."],["fw","OS / firmware"],["note","Status note"]];
+const PRESETS=[
+ {n:"Full inventory",land:true,cols:["id","type","make","model","host","ip","room","user","cond","life"],g:"sec",s:"id",f:()=>true},
+ {n:"Down and issues",land:true,cols:["id","host","type","room","cond","crit","note"],g:"cond",s:"crit",f:d=>d.cond!=="Operational"},
+ {n:"Maintenance due (30 days)",cols:["id","host","type","room","lastM","next","note"],g:"none",s:"next",f:maintDue},
+ {n:"Warranty expiring (90 days)",cols:["id","host","make","model","acq","war"],g:"sec",s:"war",f:warSoon},
+ {n:"Replacement planning",cols:["id","host","make","model","acq","war","eol","life"],g:"sec",s:"acq",f:d=>d.life==="Needs Replacement"||(d.eol&&days(d.eol)<=730)||(d.acq&&days(d.acq)<-365*4)},
+ {n:"Network address list",cols:["id","host","ip","mac","type","room"],g:"sec",s:"ip",f:d=>d.ip&&!/^n\/a$/i.test(d.ip)},
+ {n:"Hot spares and stock",cols:["id","type","make","model","room","life"],g:"type",s:"id",f:d=>["Hot Spare","In Stock"].includes(d.life)},
+ {n:"Assigned devices by user",cols:["id","user","type","make","model","host"],g:"user",s:"id",f:d=>!!d.user},
+ {n:"Custom",cols:["id","host","type","cond"],g:"none",s:"id",f:()=>true}
+];
+function rv(d,k){ if(k==="sec") return secOf(d.sec).full; if(["acq","war","eol","lastM","next"].includes(k)) return d[k]?fmt(d[k]):""; return d[k]||""; }
+function rsortv(d,k){ if(k==="crit") return 9-CRIT[d.crit]; if(["acq","war","eol","lastM","next"].includes(k)) return d[k]||"9999"; return val(d,k); }
+function opts(sel,list,cur){ $(sel).innerHTML=list.map(([v,l])=>'<option value="'+esc(v)+'"'+(v===cur?' selected':'')+'>'+esc(l)+'</option>').join(""); }
+function initReports(){
+  opts("#rPreset",PRESETS.map((p,i)=>[String(i),p.n]),"0");
+  opts("#rSec",[["","All sections"]].concat(SECTIONS.map(x=>[x.id,x.full])),"");
+  opts("#rCond",[["","Any"]].concat(Object.keys(COND).map(x=>[x,x])),"");
+  opts("#rLife",[["","Any"]].concat(Object.keys(LIFE).map(x=>[x,x])),"");
+  opts("#rLoc",[["","Any"]].concat([...new Set(D.map(d=>d.room.replace(/ \(.*\)$/,"")))].sort().map(x=>[x,x])),"");
+  opts("#rGroup",[["none","No grouping"],["sec","Section"],["type","Device type"],["room","Location"],["cond","Condition"],["life","Lifecycle"],["dept","Owner / dept."],["user","Assigned user"],["make","Make"]],"sec");
+  opts("#rSort",RCOLS.filter(c=>c[0]!=="photo").concat([["crit","Criticality"]]).filter((c,i,a)=>a.findIndex(x=>x[0]===c[0])===i).map(c=>[c[0],c[1]]),"id");
+  $("#rCols").innerHTML=RCOLS.map(([k,l])=>'<label><input type="checkbox" value="'+k+'">'+esc(l)+'</label>').join("");
+  applyPreset(0);
+}
+function applyPreset(i){
+  const p=PRESETS[i]; state.rp=i;
+  $("#rTitle").value = p.n==="Custom"?"Custom device report":p.n;
+  $("#rCols").querySelectorAll("input").forEach(c=>c.checked=p.cols.includes(c.value));
+  $("#rGroup").value=p.g; $("#rSort").value=p.s;
+  ["#rSec","#rCond","#rLife","#rLoc"].forEach(x=>$(x).value="");
+  $("#rPhotos").checked=false; $("#rLandscape").checked=!!p.land;
+  renderReport();
+}
+function renderReport(){
+  const p=PRESETS[state.rp||0];
+  let cols=[...$("#rCols").querySelectorAll("input:checked")].map(c=>c.value);
+  if($("#rPhotos").checked && !cols.includes("photo")) cols.unshift("photo");
+  if(!$("#rPhotos").checked) cols=cols.filter(c=>c!=="photo");
+  const sec=$("#rSec").value||(state.tab!=="ALL"?state.tab:""), cond=$("#rCond").value, life=$("#rLife").value, loc=$("#rLoc").value;
+  const rows=D.filter(p.f).filter(matches).filter(d=>(!sec||d.sec===sec)&&(!cond||d.cond===cond)&&(!life||d.life===life)&&(!loc||d.room.startsWith(loc)));
+  const sk=$("#rSort").value; rows.sort((a,b)=>String(rsortv(a,sk)).localeCompare(String(rsortv(b,sk)),undefined,{numeric:true}));
+  const g=$("#rGroup").value;
+  const groups=[]; if(g==="none") groups.push(["",rows]); else { const m={}; rows.forEach(d=>{const k=g==="sec"?secOf(d.sec).full:(g==="room"?d.room.replace(/ \(.*\)$/,""):(d[g]||"Unassigned")); (m[k]=m[k]||[]).push(d);});
+    Object.keys(m).sort((a,b)=>g==="cond"?Object.keys(COND).indexOf(a)-Object.keys(COND).indexOf(b):g==="sec"?SECTIONS.findIndex(x=>x.full===a)-SECTIONS.findIndex(x=>x.full===b):a.localeCompare(b)).forEach(k=>groups.push([k,m[k]])); }
+  const fl=[sec?secOf(sec).full:"All sections",cond&&("Condition: "+cond),life&&("Lifecycle: "+life),loc&&("Location: "+loc),state.q.trim()&&("Search: “"+state.q.trim()+"”"),p.n!=="Custom"&&p.n!=="Full inventory"&&("Preset rule: "+p.n)].filter(Boolean).join(" · ");
+  const lab=k=>RCOLS.find(c=>c[0]===k)[1];
+  const cell=(d,k)=>{ if(k==="photo") return '<div class="pimg">'+ico(d.k,1.4)+'</div>';
+    if(k==="cond") return '<span class="st '+(COND[d.cond]||"")+'">'+esc(d.cond)+'</span>';
+    if(k==="life") return '<span class="st '+(d.life==="Hot Spare"?"info":(LIFE[d.life]==="warn"||LIFE[d.life]==="bad")?LIFE[d.life]:"")+'">'+esc(d.life)+'</span>';
+    if(k==="id"||k==="ip"||k==="mac"||k==="host") return '<span class="mono">'+esc(rv(d,k))+'</span>';
+    return esc(rv(d,k)); };
+  const sumBox = $("#rSummary").checked ? '<div class="sum"><div><b>'+rows.length+'</b><span>Devices</span></div><div><b>'+rows.filter(d=>d.cond==="Down").length+'</b><span>Down</span></div><div><b>'+rows.filter(d=>d.cond!=="Operational"&&d.cond!=="Down").length+'</b><span>Other issues</span></div><div><b>'+rows.filter(maintDue).length+'</b><span>Maint. due</span></div><div><b>'+rows.filter(warSoon).length+'</b><span>Warranty &lt; 90 days</span></div></div>' : '';
+  $("#paper").style.width = $("#rLandscape").checked ? "1056px" : "816px";
+  $("#paper").innerHTML =
+   '<div class="ph1"><div><h2>'+esc($("#rTitle").value||"Device report")+'</h2></div><div class="org">iTIMS · IT Inventory Management<br>Main Plant<br>Generated Nov 27, 2026, 1:30 PM</div></div>'+
+   '<div class="flt">'+esc(fl)+'</div>'+sumBox+
+   (rows.length? '<table><thead><tr>'+cols.map(k=>'<th>'+esc(lab(k))+'</th>').join("")+'</tr></thead><tbody>'+
+    groups.map(([gk,items])=>(gk?'<tr class="grp"><td colspan="'+cols.length+'">'+esc(gk)+' <span style="font-weight:500;color:var(--paper-muted)">('+items.length+')</span></td></tr>':'')+
+      items.map(d=>'<tr>'+cols.map(k=>'<td>'+cell(d,k)+'</td>').join("")+'</tr>').join("")).join("")+'</tbody></table>'
+    : '<p style="color:var(--paper-muted);padding:20px 0">No devices match this report’s filters.</p>')+
+   '<div class="pf"><span>'+rows.length+' devices · '+cols.length+' columns · Letter, '+($("#rLandscape").checked?"landscape":"portrait")+'</span><span>Page 1 of 1</span></div>';
+  fitPaper();
+}
+function fitPaper(){ const w=$(".paper-wrap"), pp=$("#paper"); if(!w||!w.clientWidth) return; const avail=w.clientWidth-36, pw=parseFloat(pp.style.width)||816;
+  pp.style.zoom = avail<pw ? (avail/pw).toFixed(3) : 1; }
+function setView(v){
+  state.view=v;
+  $("#viewDash").hidden = v!=="dash"; $("#viewDash").style.display = v==="dash"?"flex":"none";
+  $("#viewPhotos").hidden = v!=="photos"; $("#viewReports").hidden = v!=="reports";
+  $("#vDash").setAttribute("aria-pressed",v==="dash"); $("#vPhotos").setAttribute("aria-pressed",v==="photos"); $("#vReports").setAttribute("aria-pressed",v==="reports");
+  if(v==="reports") renderReport();
+  hidePop();
+  if(v==="photos") renderPhotos();
+}
+function renderAll(){ renderHeader(); renderTabs(); renderTiles(); renderAttention(); renderPins(); renderTable(); if(state.view==="photos") renderPhotos(); if(state.view==="reports") renderReport(); }
+
+/* events */
+document.addEventListener("click",e=>{
+  const t=e.target;
+  const tab=t.closest("[data-tab]"); if(tab){ state.tab=tab.dataset.tab; try{localStorage.setItem("idc-tab",state.tab)}catch(_){} hidePop(); renderAll(); return; }
+  const vw=t.closest("[data-view]"); if(vw){ const v=vw.dataset.view; const h=v==="dash"?"":v; if(location.hash.slice(1)!==h) location.hash=h; setView(v); return; }
+  const s=t.closest("[data-sort]"); if(s){ const k=s.dataset.sort; state.dir = state.sort===k? -state.dir : 1; state.sort=k; renderTable(); return; }
+  if(t.id==="clearQ"){ state.q=""; $("#q").value=""; $("#kbd").hidden=false; onSearch(); return; }
+  if(t.closest("[data-action=add]")){ openAdd(); return; }
+  const lb=t.closest("[data-label]"); if(lb){ openLabel(lb.dataset.label); return; }
+  const bk=t.closest("[data-back]"); if(bk){ openDevice(bk.dataset.back); return; }
+  if(t.id==="lPrint"){ toast("Mockup: sends "+LOPT.copies+" × "+SIZES[LOPT.size].w+"×"+SIZES[LOPT.size].h+" in label"+(LOPT.copies>1?"s":"")+" for "+(labelDev?labelDev.id:"")+" to "+LOPT.printer+" in the real app."); return; }
+  if(t.id==="fSave"){ saveAdd(true); return; }
+  if(t.id==="fSaveOnly"){ saveAdd(false); return; }
+  if(t.id==="mCancel"){ closeModal(); return; }
+  const m=t.closest("[data-mock]"); if(m){ toast("Mockup: "+m.dataset.mock); return; }
+  const pin=t.closest(".pin"); if(pin){ const id=pin.dataset.id; if(state.pinned===id) openDevice(id); else showPop(id); return; }
+  const pop=t.closest(".pop"); if(pop){ openDevice(pop.dataset.for); return; }
+  const o=t.closest("[data-open]"); if(o){ openDevice(o.dataset.open); return; }
+  if(t.id==="mClose"||t.id==="scrim"){ closeModal(); return; }
+  if(!t.closest(".plan")) hidePop();
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){ closeModal(); hidePop(); }
+  if(e.key==="Enter" && e.target.matches("tr[data-open]")) openDevice(e.target.dataset.open);
+});
+$("#plan").addEventListener("pointerover",e=>{ const p=e.target.closest(".pin"); if(p && e.pointerType==="mouse" && state.pinned!==p.dataset.id) showPop(p.dataset.id); });
+$("#plan").addEventListener("pointerleave",e=>{ if(e.pointerType==="mouse") hidePop(); });
+$("#plan").addEventListener("focusin",e=>{ const p=e.target.closest(".pin"); if(p && state.pinned!==p.dataset.id) showPop(p.dataset.id); });
+$("#q").addEventListener("input",e=>{ state.q=e.target.value; suggIdx=-1; onSearch(); });
+$("#q").addEventListener("focus",()=>{ $("#kbd").hidden=true; renderSugg(); });
+$("#q").addEventListener("blur",()=>{ $("#kbd").hidden=!!state.q; setTimeout(renderSugg,150); });
+$("#q").addEventListener("keydown",e=>{
+  const opts=[...document.querySelectorAll("#sugg [role=option]")];
+  if(e.key==="ArrowDown"||e.key==="ArrowUp"){ if(!opts.length) return; e.preventDefault(); suggIdx=(suggIdx+(e.key==="ArrowDown"?1:-1)+opts.length)%opts.length; renderSugg(); }
+  else if(e.key==="Enter"){ const o=opts[suggIdx<0?0:suggIdx]; if(o){ e.preventDefault(); const id=o.dataset.open; $("#q").blur(); openDevice(id); } }
+  else if(e.key==="Escape"){ state.q=""; e.target.value=""; onSearch(); }
+});
+document.addEventListener("keydown",e=>{ if(e.key==="/" && !e.target.closest("input,select,textarea") && !document.getElementById("scrim")){ e.preventDefault(); $("#q").focus(); } });
+["groupBy","sortIn","phSize"].forEach(id=>$("#"+id).addEventListener("input",()=>{ try{localStorage.setItem("idc-"+id,$("#"+id).value)}catch(_){} renderPhotos(); }));
+["groupBy","sortIn","phSize"].forEach(id=>{ try{const v=localStorage.getItem("idc-"+id); if(v) $("#"+id).value=v;}catch(_){} });
+document.addEventListener("input",e=>{
+  if(!e.target.closest("#modalRoot")) return;
+  if(e.target.id==="fSec") fillTypes();
+  if(e.target.closest(".lopts")) readLOPT();
+  if(document.getElementById("addForm")) updateAdd(); else if(labelDev) $("#lStage").innerHTML=stageHTML(labelDev);
+});
+window.addEventListener("hashchange",()=>setView(["#photos","#reports"].includes(location.hash)?location.hash.slice(1):"dash"));
+$("#rPreset").addEventListener("change",e=>applyPreset(+e.target.value));
+["rTitle","rSec","rCond","rLife","rLoc","rGroup","rSort","rPhotos","rSummary","rLandscape"].forEach(id=>$("#"+id).addEventListener("input",renderReport));
+$("#rCols").addEventListener("change",e=>{ if(e.target.value==="photo") $("#rPhotos").checked=e.target.checked; renderReport(); });
+window.addEventListener("resize",()=>{ if(state.view==="reports") fitPaper(); if(state.pinned) showPop(state.pinned); });
+
+initReports();
+state.view = ["#photos","#reports"].includes(location.hash)?location.hash.slice(1):"dash";
+renderAll(); setView(state.view);
+</script>
